@@ -11,6 +11,7 @@ export function IndexPage() {
   const tags = useTags()
   const meta = useMeta()
   const tagName = tags.data?.find((t) => t.slug === tag)?.name
+  const loading = discussions.isPending
 
   const go = (next: number) => {
     const q = new URLSearchParams(params)
@@ -21,7 +22,9 @@ export function IndexPage() {
   return (
     <>
       <h1>{tagName ?? '全部讨论'}</h1>
-      <p className="muted">共 {discussions.data?.total ?? 0} 个讨论</p>
+      <p className="muted">
+        {loading ? '加载中…' : `共 ${discussions.data?.total ?? 0} 个讨论`}
+      </p>
 
       <TagBar
         tags={tags.data ?? []}
@@ -32,7 +35,7 @@ export function IndexPage() {
       <div className="grid">
         {discussions.data?.items.map((d) => <DiscussionCard key={d.id} d={d} />)}
       </div>
-      {discussions.data?.total === 0 && (
+      {!loading && discussions.data?.total === 0 && (
         <p className="muted">这里还没有公开的讨论。</p>
       )}
       {discussions.isError && <p className="muted">加载失败：{String(discussions.error)}</p>}
