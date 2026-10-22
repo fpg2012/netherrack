@@ -394,8 +394,65 @@ button:disabled { opacity: .5; cursor: default; }
 }
 .post-head .actions button:hover { color: #1a1a1a; background: #eaeaea; }
 .preview { border: 1px dashed #ccc; padding: .2em .8em; margin: .3em 0; }
-.adminbar { font-size: 85%; }
-.adminbar button { margin-right: .4em; }
+/* 讨论页标题下的元信息与右侧管理菜单 */
+.discussion-meta {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}
+.discussion-meta .muted { margin: .4em 0; }
+.discussion-meta .dropdown { margin-left: auto; }
+
+/* 通用下拉菜单（管理、用户菜单共用一套外观） */
+.dropdown { position: relative; }
+.dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: .3em;
+  padding: .1em .45em;
+  border: 1px solid #d5d5d5;
+  border-radius: 2px;
+  background: none;
+  color: #555;
+  font-size: 80%;
+  cursor: pointer;
+}
+.dropdown-trigger:hover, .dropdown-trigger[aria-expanded="true"] {
+  border-color: #999;
+  color: #1a1a1a;
+}
+.dropdown-trigger .caret { color: #999; font-size: 70%; }
+.dropdown-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + .3em);
+  min-width: 9em;
+  padding: .25em 0;
+  border: 1px solid #d5d5d5;
+  border-radius: 2px;
+  background: #fdfdfd;
+  z-index: 20;
+}
+.dropdown-list button {
+  display: block;
+  width: 100%;
+  padding: .35em .8em;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-size: 88%;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dropdown-list button:hover:not(:disabled) { background: #f0f0f0; }
+.dropdown-list button:disabled { color: #aaa; cursor: default; }
+.dropdown-list hr {
+  margin: .25em 0;
+  border: 0;
+  border-top: 1px solid #e8e8e8;
+}
 .tags-picker {
   border: 1px solid #e0e0e0;
   padding: .4em .8em;
@@ -671,6 +728,15 @@ ul.posts-list li:last-child { border-bottom: 0; }
   .usermenu-trigger .who { color: #c8c8c8; }
   .usermenu-list { background: #242424; border-color: #3a3a3a; }
   .usermenu-list a:hover, .usermenu-list button:hover { background: #2f2f2f; }
+  .dropdown-trigger { border-color: #3a3a3a; color: #b0b0b0; }
+  .dropdown-trigger:hover, .dropdown-trigger[aria-expanded="true"] {
+    border-color: #666;
+    color: #e8e8e8;
+  }
+  .dropdown-list { background: #242424; border-color: #3a3a3a; }
+  .dropdown-list button:hover:not(:disabled) { background: #2f2f2f; }
+  .dropdown-list button:disabled { color: #666; }
+  .dropdown-list hr { border-top-color: #333; }
   .profile { border-bottom-color: #2e2e2e; }
   .profile .avatar { border-color: #3a3a3a; }
   .profile-stats { color: #a0a0a0; }

@@ -4,6 +4,7 @@ import {
   useDiscussion, useEditDiscussion, useEditPost, useMe, useReply, useTags, useTimeline,
 } from '../api/hooks'
 import { PostCard } from '../components/PostCard'
+import { Dropdown } from '../components/Dropdown'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { datetime, displayName } from '../lib/format'
 import type { Post } from '../types'
@@ -48,10 +49,43 @@ export function DiscussionPage() {
   return (
     <>
       <h1>{d.title}</h1>
-      <p className="muted">
-        {displayName(d.author)} · {datetime(d.created_at)} · {timeline.data?.total ?? d.post_count} 帖
-        {d.is_locked && ' · 已锁定'}
-      </p>
+      <div className="discussion-meta">
+        <p className="muted">
+          {displayName(d.author)} · {datetime(d.created_at)} · {timeline.data?.total ?? d.post_count} 帖
+          {d.is_sticky && ' · 已置顶'}
+          {d.is_locked && ' · 已锁定'}
+        </p>
+        {isAdmin && (
+          <Dropdown
+            label="管理"
+            items={[
+              {
+                label: '改标签…',
+                onSelect: () => {
+                  setPicked(d.tags.map((t) => t.slug))
+                  setTagEditor(true)
+                },
+              },
+              { divider: true },
+              {
+                label: d.is_sticky ? '取消置顶' : '置顶',
+                disabled: editDiscussion.isPending,
+                onSelect: () => editDiscussion.mutate({ is_sticky: !d.is_sticky }),
+              },
+              {
+                label: d.is_locked ? '解锁' : '锁定',
+                disabled: editDiscussion.isPending,
+                onSelect: () => editDiscussion.mutate({ is_locked: !d.is_locked }),
+              },
+              {
+                label: d.is_public ? '转为私密' : '设为公开',
+                disabled: editDiscussion.isPending,
+                onSelect: () => editDiscussion.mutate({ is_public: !d.is_public }),
+              },
+            ]}
+          />
+        )}
+      </div>
 
       <div className="post-tags">
         {d.tags.map((t) => (
@@ -59,7 +93,7 @@ export function DiscussionPage() {
             <Link to={`/?tag=${t.slug}`}>{t.name}</Link>
           </span>
         ))}
-        {(isAdmin || isAuthor) && (
+        {!isAdmin && isAuthor && (
           <button
             type="button"
             className="linklike"
@@ -111,23 +145,6 @@ export function DiscussionPage() {
             {editDiscussion.isError && <span className="event"> 保存失败</span>}
           </div>
         </div>
-      )}
-
-      {isAdmin && (
-        <p className="adminbar">
-          <button type="button" disabled={editDiscussion.isPending}
-                  onClick={() => editDiscussion.mutate({ is_sticky: !d.is_sticky })}>
-            {d.is_sticky ? '取消置顶' : '置顶'}
-          </button>
-          <button type="button" disabled={editDiscussion.isPending}
-                  onClick={() => editDiscussion.mutate({ is_locked: !d.is_locked })}>
-            {d.is_locked ? '解锁' : '锁定'}
-          </button>
-          <button type="button" disabled={editDiscussion.isPending}
-                  onClick={() => editDiscussion.mutate({ is_public: !d.is_public })}>
-            {d.is_public ? '转为私密' : '设为公开'}
-          </button>
-        </p>
       )}
 
       {timeline.data?.items.map((item) =>
