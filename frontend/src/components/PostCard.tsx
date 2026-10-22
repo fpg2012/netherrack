@@ -31,8 +31,8 @@ export function PostCard({
   return (
     <div className={best ? 'post best-answer' : 'post'} id={`p${post.id}`}>
       <div className="post-head">
-        <span className="avatar-slot"><Avatar user={post.author} /></span>
         <span className="floor">#{post.number}</span>
+        <span className="avatar-slot"><Avatar user={post.author} /></span>
         <span className="who">
           <span className="author">{displayName(post.author)}</span>
           <span className="time">{datetime(post.created_at)}</span>

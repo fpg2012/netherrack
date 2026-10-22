@@ -166,7 +166,9 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
 .post-head .floor {
   display: flex;
   align-items: center;
-  padding: .3em 0 .3em .9em;
+  justify-content: flex-end;
+  min-width: 2.4em;
+  padding: .3em .1em .3em .9em;
   font-family: Menlo, Consolas, monospace;
   font-size: 85%;
   color: #666;
@@ -422,8 +424,7 @@ table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
   flex: 0 0 auto;
   image-rendering: auto;
 }
-.avatar-slot { display: flex; align-items: center; padding-left: .8em; }
-.post-head .floor { padding-left: .55em; }
+.avatar-slot { display: flex; align-items: center; padding-left: .5em; }
 .user-cell { display: flex; align-items: center; gap: .5em; }
 
 @media (prefers-color-scheme: dark) {
