@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Query
 from sqlalchemy import func, select
 
-from app.api.deps import SessionDep
+from app.api.deps import OptionalUser, SessionDep
 from app.models import Discussion, Post, User
 from app.schemas.common import Page
 from app.schemas.user import UserListItem
+from app.services.visibility import discussion_visible
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -12,19 +13,21 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.get("", response_model=Page[UserListItem])
 async def list_users(
     session: SessionDep,
+    user: OptionalUser,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     q: str | None = Query(None, max_length=64),
 ) -> Page[UserListItem]:
     post_counts = (
         select(Post.author_id, func.count().label("n"))
-        .where(Post.hidden_at.is_(None))
+        .join(Discussion, Discussion.id == Post.discussion_id)
+        .where(Post.hidden_at.is_(None), discussion_visible(user))
         .group_by(Post.author_id)
         .subquery()
     )
     discussion_counts = (
         select(Discussion.author_id, func.count().label("n"))
-        .where(Discussion.is_private.is_(False))
+        .where(discussion_visible(user))
         .group_by(Discussion.author_id)
         .subquery()
     )

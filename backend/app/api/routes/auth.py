@@ -6,6 +6,7 @@ from sqlalchemy import delete, select
 
 from app.api.deps import CurrentUser, SessionDep, verify_csrf
 from app.core.config import settings
+from app.core.ratelimit import limiter
 from app.core.security import (
     create_token,
     decode_token,
@@ -50,6 +51,7 @@ async def _issue(session, user: User, response: Response, user_agent: str | None
 
 
 @router.post("/login", response_model=LoginOut)
+@limiter.limit("10/minute")
 async def login(payload: LoginIn, request: Request, response: Response,
                 session: SessionDep) -> LoginOut:
     user = await session.scalar(select(User).where(User.username == payload.username))

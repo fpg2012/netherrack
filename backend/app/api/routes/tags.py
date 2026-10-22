@@ -1,19 +1,20 @@
 from fastapi import APIRouter
 from sqlalchemy import func, select
 
-from app.api.deps import SessionDep
+from app.api.deps import OptionalUser, SessionDep
 from app.models import Discussion, DiscussionTag, Tag
 from app.schemas.content import TagWithCount
+from app.services.visibility import discussion_visible
 
 router = APIRouter(prefix="/tags", tags=["tags"])
 
 
 @router.get("", response_model=list[TagWithCount])
-async def list_tags(session: SessionDep) -> list[TagWithCount]:
+async def list_tags(session: SessionDep, user: OptionalUser) -> list[TagWithCount]:
     counts = (
         select(DiscussionTag.tag_id, func.count().label("n"))
         .join(Discussion, Discussion.id == DiscussionTag.discussion_id)
-        .where(Discussion.is_private.is_(False))
+        .where(discussion_visible(user))
         .group_by(DiscussionTag.tag_id)
         .subquery()
     )

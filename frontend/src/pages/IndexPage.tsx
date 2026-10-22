@@ -32,6 +32,9 @@ export function IndexPage() {
       <div className="grid">
         {discussions.data?.items.map((d) => <DiscussionCard key={d.id} d={d} />)}
       </div>
+      {discussions.data?.total === 0 && (
+        <p className="muted">这里还没有公开的讨论。</p>
+      )}
       {discussions.isError && <p className="muted">加载失败：{String(discussions.error)}</p>}
 
       <p className="pager">

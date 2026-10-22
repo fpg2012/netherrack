@@ -47,6 +47,20 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 - 附件：`POST /api/v1/uploads`（multipart），图片/PDF/文本/zip，单个 ≤10 MB；
   文件名重写为 `<uuid>-<原名>`，按日期分目录存在 `data/public/assets/files/`
 
+## 访问控制与限流
+
+- 讨论默认**不公开**：未登录访客只能看到 `is_public=true` 的讨论，管理员在讨论页
+  「设为公开 / 转为私密」切换；列表、标签计数、站点统计都按访客身份过滤
+- 搜索需要登录（`GET /search` 走 `CurrentUser`）
+- 帖子附件：游客只能访问「公开讨论正文里引用过」的文件，其余返回 401；
+  头像、字体等公共资源不受限
+- 限流用 slowapi，默认 300 次/分钟，另有：
+  - 登录 10 次/分钟（防爆破）
+  - 搜索 30 次/分钟
+  - 发帖 10 次/小时、回复 30 次/小时、编辑 60 次/小时
+  - 上传 20 次/小时
+  多 worker 部署时把 `app/core/ratelimit.py` 的存储换成 Redis
+
 ## 约定
 
 - **认证**：access/refresh 两个 JWT 全放 `HttpOnly` cookie；所有写操作要求

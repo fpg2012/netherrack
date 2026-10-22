@@ -6,34 +6,42 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import csrf_matches, decode_token
 from app.db.session import get_session
-from app.models import User
+from app.models import RevokedToken, User
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
+AccessCookie = Annotated[str | None, Cookie()]
 
 
-async def get_current_user(
-    session: SessionDep,
-    access_token: Annotated[str | None, Cookie()] = None,
-) -> User:
-    if not access_token:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "未登录")
-    payload = decode_token(access_token, "access")
+async def _user_from_token(session: AsyncSession, token: str | None) -> User | None:
+    if not token:
+        return None
+    payload = decode_token(token, "access")
     if payload is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "登录已过期")
-    from app.models import RevokedToken
-
+        return None
     revoked = await session.scalar(
         select(RevokedToken.id).where(RevokedToken.jti == payload.get("jti"))
     )
     if revoked:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "已登出")
+        return None
     user = await session.get(User, int(payload["sub"]))
     if user is None or not user.is_active:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "账号不可用")
+        return None
     return user
 
 
+async def get_current_user(session: SessionDep, access_token: AccessCookie = None) -> User:
+    user = await _user_from_token(session, access_token)
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "请先登录")
+    return user
+
+
+async def get_optional_user(session: SessionDep, access_token: AccessCookie = None) -> User | None:
+    return await _user_from_token(session, access_token)
+
+
 CurrentUser = Annotated[User, Depends(get_current_user)]
+OptionalUser = Annotated[User | None, Depends(get_optional_user)]
 
 
 async def verify_csrf(

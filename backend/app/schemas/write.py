@@ -22,3 +22,4 @@ class EditDiscussion(BaseModel):
     is_locked: bool | None = None
     tags: list[str] | None = Field(default=None, max_length=5)
     best_answer_post_id: int | None = None
+    is_public: bool | None = None

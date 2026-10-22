@@ -1,13 +1,23 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useSearch } from '../api/hooks'
+import { useMe, useSearch } from '../api/hooks'
 import { date, displayName } from '../lib/format'
 
 export function SearchPage() {
   const [params] = useSearchParams()
   const q = params.get('q') ?? ''
   const [page, setPage] = useState(1)
+  const me = useMe()
   const results = useSearch(q, page)
+
+  if (!me.data) {
+    return (
+      <>
+        <h1>搜索</h1>
+        <p className="muted"><Link to="/login">登录</Link> 后才能搜索站内内容。</p>
+      </>
+    )
+  }
 
   return (
     <>

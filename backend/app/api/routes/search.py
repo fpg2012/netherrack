@@ -1,10 +1,11 @@
 from functools import reduce
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from sqlalchemy import func, or_, select
 from sqlalchemy.sql import ColumnElement
 
-from app.api.deps import SessionDep
+from app.api.deps import CurrentUser, SessionDep
+from app.core.ratelimit import limiter
 from app.models import Discussion, Post
 from app.schemas.common import Page
 from app.schemas.content import SearchHit, UserBrief
@@ -32,7 +33,7 @@ async def _run(session, tsq: ColumnElement, page: int, per_page: int) -> tuple[i
     base = (
         select(Post, Discussion.title)
         .join(Discussion, Discussion.id == Post.discussion_id)
-        .where(Post.hidden_at.is_(None), Discussion.is_private.is_(False), matched)
+        .where(Post.hidden_at.is_(None), matched)
     )
     total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
     if total == 0:
@@ -58,8 +59,11 @@ async def _run(session, tsq: ColumnElement, page: int, per_page: int) -> tuple[i
 
 
 @router.get("/search", response_model=Page[SearchHit])
+@limiter.limit("30/minute")
 async def search(
+    request: Request,
     session: SessionDep,
+    user: CurrentUser,
     q: str = Query(..., min_length=1, max_length=100),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -81,7 +85,6 @@ async def search(
             .join(Discussion, Discussion.id == Post.discussion_id)
             .where(
                 Post.hidden_at.is_(None),
-                Discussion.is_private.is_(False),
                 or_(Post.search_text.ilike(like), Discussion.search_text.ilike(like)),
             )
         )

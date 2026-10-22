@@ -23,6 +23,7 @@ export interface DiscussionBrief {
   slug: string | null
   is_sticky: boolean
   is_locked: boolean
+  is_public: boolean
   post_count: number
   created_at: string
   last_posted_at: string | null

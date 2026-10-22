@@ -99,6 +99,7 @@ export function useEditDiscussion(discussionId: number) {
       title?: string
       is_sticky?: boolean
       is_locked?: boolean
+      is_public?: boolean
       tags?: string[]
       best_answer_post_id?: number
     }) => api.patch<DiscussionDetail>(`/discussions/${discussionId}`, body),

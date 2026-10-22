@@ -3,11 +3,12 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel
 
 from app.api.deps import CurrentUser, SessionDep, verify_csrf
 from app.core.config import settings
+from app.core.ratelimit import limiter
 from app.models import Upload
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
@@ -39,7 +40,9 @@ class UploadOut(BaseModel):
 
 
 @router.post("", response_model=UploadOut, status_code=201, dependencies=[Depends(verify_csrf)])
-async def upload(file: UploadFile, session: SessionDep, user: CurrentUser) -> UploadOut:
+@limiter.limit("20/hour")
+async def upload(request: Request, file: UploadFile, session: SessionDep,
+                 user: CurrentUser) -> UploadOut:
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in ALLOWED:
         raise HTTPException(

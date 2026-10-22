@@ -1,8 +1,9 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.api.deps import CurrentUser, SessionDep, verify_csrf
+from app.core.ratelimit import limiter
 from app.models import Discussion, Post
 from app.schemas.content import PostOut
 from app.schemas.write import EditPost
@@ -24,7 +25,8 @@ async def _get_editable(post_id: int, user, session) -> Post:
 
 
 @router.patch("/{post_id}", response_model=PostOut, dependencies=[Depends(verify_csrf)])
-async def edit_post(post_id: int, payload: EditPost, session: SessionDep,
+@limiter.limit("60/hour")
+async def edit_post(request: Request, post_id: int, payload: EditPost, session: SessionDep,
                     user: CurrentUser) -> PostOut:
     post = await _get_editable(post_id, user, session)
     post.body_md = payload.body_md

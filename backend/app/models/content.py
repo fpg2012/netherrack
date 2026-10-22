@@ -55,7 +55,8 @@ class Discussion(Base):
     author_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     is_sticky: Mapped[bool] = mapped_column(Boolean, default=False)
     is_locked: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_private: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 默认私密：只有显式标记为 public 的讨论才允许游客查看
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     post_count: Mapped[int] = mapped_column(Integer, default=0)
     best_answer_post_id: Mapped[int | None] = mapped_column(
         ForeignKey("posts.id", ondelete="SET NULL", use_alter=True, name="fk_best_answer"),

@@ -34,6 +34,7 @@ class DiscussionBrief(BaseModel):
     slug: str | None = None
     is_sticky: bool = False
     is_locked: bool = False
+    is_public: bool = False
     post_count: int = 0
     created_at: datetime
     last_posted_at: datetime | None = None

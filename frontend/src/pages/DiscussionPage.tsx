@@ -123,6 +123,10 @@ export function DiscussionPage() {
                   onClick={() => editDiscussion.mutate({ is_locked: !d.is_locked })}>
             {d.is_locked ? '解锁' : '锁定'}
           </button>
+          <button type="button" disabled={editDiscussion.isPending}
+                  onClick={() => editDiscussion.mutate({ is_public: !d.is_public })}>
+            {d.is_public ? '转为私密' : '设为公开'}
+          </button>
         </p>
       )}
 

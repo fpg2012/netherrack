@@ -1,10 +1,11 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import CurrentUser, SessionDep, verify_csrf
+from app.api.deps import CurrentUser, OptionalUser, SessionDep, verify_csrf
+from app.core.ratelimit import limiter
 from app.models import Discussion, DiscussionEvent, DiscussionTag, Post, Tag
 from app.schemas.common import Page
 from app.schemas.content import (
@@ -18,6 +19,7 @@ from app.schemas.write import EditDiscussion, NewDiscussion, NewPost
 from app.services.content import event_text, render_markdown
 from app.services.quote import build_quote
 from app.services.search import index_text, segment
+from app.services.visibility import can_view, discussion_visible
 
 router = APIRouter(prefix="/discussions", tags=["discussions"])
 
@@ -25,12 +27,13 @@ router = APIRouter(prefix="/discussions", tags=["discussions"])
 @router.get("", response_model=Page[DiscussionBrief])
 async def list_discussions(
     session: SessionDep,
+    user: OptionalUser,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     tag: str | None = None,
     q: str | None = None,
 ) -> Page[DiscussionBrief]:
-    stmt = select(Discussion).where(Discussion.is_private.is_(False))
+    stmt = select(Discussion).where(discussion_visible(user))
     if tag:
         stmt = stmt.where(
             Discussion.id.in_(
@@ -62,9 +65,10 @@ async def list_discussions(
 
 
 @router.get("/{discussion_id}", response_model=DiscussionDetail)
-async def get_discussion(discussion_id: int, session: SessionDep) -> DiscussionDetail:
+async def get_discussion(discussion_id: int, session: SessionDep,
+                         user: OptionalUser) -> DiscussionDetail:
     discussion = await session.get(Discussion, discussion_id)
-    if discussion is None or discussion.is_private:
+    if discussion is None or not can_view(discussion, user):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
     await session.refresh(discussion, ["tags"])
     return DiscussionDetail.model_validate(discussion)
@@ -74,12 +78,13 @@ async def get_discussion(discussion_id: int, session: SessionDep) -> DiscussionD
 async def timeline(
     discussion_id: int,
     session: SessionDep,
+    user: OptionalUser,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
 ) -> Page[TimelineItem]:
     """帖子按楼层号分页，夹在其中的操作记录一起返回，保持时间顺序。"""
     discussion = await session.get(Discussion, discussion_id)
-    if discussion is None or discussion.is_private:
+    if discussion is None or not can_view(discussion, user):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
 
     total = await session.scalar(
@@ -148,7 +153,8 @@ def _record(session, discussion_id: int, actor_id: int, kind: str, payload: dict
 
 @router.post("", response_model=DiscussionDetail, status_code=201,
              dependencies=[Depends(verify_csrf)])
-async def create_discussion(payload: NewDiscussion, session: SessionDep,
+@limiter.limit("10/hour")
+async def create_discussion(request: Request, payload: NewDiscussion, session: SessionDep,
                             user: CurrentUser) -> DiscussionDetail:
     tags = await _tags_by_slug(session, payload.tags)
     now = datetime.now(UTC)
@@ -184,7 +190,8 @@ async def create_discussion(payload: NewDiscussion, session: SessionDep,
 
 @router.post("/{discussion_id}/posts", response_model=PostOut, status_code=201,
              dependencies=[Depends(verify_csrf)])
-async def reply(discussion_id: int, payload: NewPost, session: SessionDep,
+@limiter.limit("30/hour")
+async def reply(request: Request, discussion_id: int, payload: NewPost, session: SessionDep,
                 user: CurrentUser) -> PostOut:
     # 锁定行，保证楼层号并发安全
     # 只锁 discussions 这一张表：author 是 joined 预加载，锁整行会命中外连接
@@ -192,7 +199,7 @@ async def reply(discussion_id: int, payload: NewPost, session: SessionDep,
         select(Discussion).where(Discussion.id == discussion_id)
         .with_for_update(of=Discussion)
     )
-    if discussion is None or discussion.is_private:
+    if discussion is None or not can_view(discussion, user):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
     if discussion.is_locked and not user.is_admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "讨论已锁定")
@@ -232,12 +239,13 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
         select(Discussion).where(Discussion.id == discussion_id)
         .with_for_update(of=Discussion)
     )
-    if discussion is None or discussion.is_private:
+    if discussion is None or not can_view(discussion, user):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
 
     is_owner = discussion.author_id == user.id
     admin_only = any(v is not None for v in (
-        payload.is_sticky, payload.is_locked, payload.best_answer_post_id))
+        payload.is_sticky, payload.is_locked, payload.best_answer_post_id,
+        payload.is_public))
     if not user.is_admin and not (is_owner and not admin_only):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "无权修改该讨论")
 
@@ -265,6 +273,9 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
             discussion.tags = tags
             _record(session, discussion.id, user.id, "discussionTagged",
                     {"added": sorted(new - old), "removed": sorted(old - new)})
+
+    if payload.is_public is not None and payload.is_public != discussion.is_public:
+        discussion.is_public = payload.is_public
 
     if payload.best_answer_post_id is not None:
         post = await session.get(Post, payload.best_answer_post_id)

@@ -160,7 +160,6 @@ async def import_dump(path: str, force: bool = False) -> None:
                 author_id=_int(row[dcols["user_id"]]),
                 is_sticky=row[dcols["is_sticky"]] == "1",
                 is_locked=row[dcols["is_locked"]] == "1",
-                is_private=row[dcols["is_private"]] == "1",
                 created_at=_dt(row[dcols["created_at"]]) or datetime.now(UTC),
                 last_posted_at=_dt(row[dcols["last_posted_at"]]),
             ))

@@ -18,6 +18,7 @@ dependencies = [
     "nh3>=0.2",
     "bcrypt>=4.1",
     "jieba>=0.42.1",
+    "slowapi>=0.1.10",
 ]
 
 [dependency-groups]
