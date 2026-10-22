@@ -185,3 +185,36 @@ export function useUserPosts(id: number, page: number) {
     queryFn: () => api.get<Page<UserPost>>(`/users/${id}/posts?page=${page}`),
   })
 }
+
+
+// ---------------------------------------------------------------- 设置
+
+export function useUpdateProfile(id: number | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { nickname: string; bio: string }) =>
+      api.patch<UserProfile>('/users/me', body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['me'] })
+      if (id) qc.invalidateQueries({ queryKey: ['user', id] })
+    },
+  })
+}
+
+export function useUploadAvatar(id: number | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (form: FormData) => api.postForm<UserProfile>('/users/me/avatar', form),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['me'] })
+      if (id) qc.invalidateQueries({ queryKey: ['user', id] })
+    },
+  })
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (body: { current_password: string; new_password: string }) =>
+      api.post<void>('/users/me/password', body),
+  })
+}

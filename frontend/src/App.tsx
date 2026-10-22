@@ -8,6 +8,7 @@ import { NewDiscussionPage } from './pages/NewDiscussionPage'
 import { UsersPage } from './pages/UsersPage'
 import { UserPage } from './pages/UserPage'
 import { NotificationsPage } from './pages/NotificationsPage'
+import { SettingsPage } from './pages/SettingsPage'
 
 export function App() {
   return (
@@ -23,6 +24,7 @@ export function App() {
         <Route path="/users" element={<UsersPage />} />
           <Route path="/u/:id" element={<UserPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<p>页面不存在。</p>} />
         </Routes>
       </main>

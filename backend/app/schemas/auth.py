@@ -13,6 +13,7 @@ class UserOut(BaseModel):
     username: str
     nickname: str | None = None
     avatar_path: str | None = None
+    bio: str | None = None
     is_admin: bool = False
 
 

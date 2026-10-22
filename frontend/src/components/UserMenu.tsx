@@ -47,6 +47,9 @@ export function UserMenu() {
           <Link to={`/u/${me.data.id}`} role="menuitem" onClick={() => setOpen(false)}>
             个人主页
           </Link>
+          <Link to="/settings" role="menuitem" onClick={() => setOpen(false)}>
+            设置
+          </Link>
           <button
             type="button"
             role="menuitem"

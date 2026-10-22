@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class UserListItem(BaseModel):
@@ -27,3 +27,13 @@ class UserPostItem(BaseModel):
     number: int
     created_at: datetime
     snippet: str
+
+
+class ProfileUpdate(BaseModel):
+    nickname: str | None = None
+    bio: str | None = None
+
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=8, max_length=128)

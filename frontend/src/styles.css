@@ -618,3 +618,59 @@ ul.posts-list li:last-child { border-bottom: 0; }
   .post-meta { color: #7a7a7a; }
   .tag.role { border-color: #66bb6a; color: #66bb6a; }
 }
+
+/* 设置页 */
+.settings {
+  margin: 1.6em 0 0;
+  padding-top: 1.2em;
+  border-top: 1px solid #e3e3e3;
+}
+.settings h2 { margin: 0 0 .3em; font-size: 1.05em; }
+.settings label { display: block; margin: .9em 0 0; }
+.settings label > span {
+  display: block;
+  margin-bottom: .3em;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 72%;
+  color: #777;
+}
+.settings input.inline, .settings textarea.inline {
+  font: inherit;
+  font-size: 92%;
+  width: 100%;
+  padding: .35em .5em;
+  border: 1px solid #bbb;
+  border-radius: 2px;
+  background: #fff;
+  color: inherit;
+  resize: vertical;
+}
+.settings-actions { display: flex; align-items: center; gap: .9em; margin-top: .8em; }
+.settings .button {
+  font: inherit;
+  font-size: 85%;
+  padding: .25em .9em;
+  border: 1px solid #1a1a1a;
+  border-radius: 2px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.settings .button:hover:not(:disabled) { background: #1a1a1a; color: #fdfdfd; }
+.settings .button:disabled { border-color: #ccc; color: #aaa; cursor: default; }
+.msg { margin: 0; font-size: 85%; }
+.msg.ok { color: #2e7d32; }
+.msg.err { color: #b3261e; }
+.avatar-row { display: flex; gap: 1.1em; align-items: flex-start; margin-top: .8em; }
+.avatar-row input[type="file"] { font: inherit; font-size: 82%; max-width: 100%; }
+
+@media (prefers-color-scheme: dark) {
+  .settings { border-top-color: #2e2e2e; }
+  .settings label > span { color: #8f8f8f; }
+  .settings input.inline, .settings textarea.inline { background: #242424; border-color: #3a3a3a; }
+  .settings .button { border-color: #d8d8d8; }
+  .settings .button:hover:not(:disabled) { background: #d8d8d8; color: #1a1a1a; }
+  .settings .button:disabled { border-color: #3a3a3a; color: #666; }
+  .msg.ok { color: #66bb6a; }
+  .msg.err { color: #e57373; }
+}
