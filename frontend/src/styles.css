@@ -408,3 +408,24 @@ table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
   .tag-editor { background: #202020; border-color: #3a3a3a; }
   .tag-editor-actions { border-top-color: #333; }
 }
+
+/* 头像 */
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ececec;
+  color: #666;
+  font-size: 80%;
+  flex: 0 0 auto;
+  image-rendering: auto;
+}
+.avatar-slot { display: flex; align-items: center; padding-left: .8em; }
+.post-head .floor { padding-left: .55em; }
+.user-cell { display: flex; align-items: center; gap: .5em; }
+
+@media (prefers-color-scheme: dark) {
+  .avatar-fallback { background: #2c2c2c; color: #aaa; }
+}

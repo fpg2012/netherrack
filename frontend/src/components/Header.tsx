@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { useLogout, useMe } from '../api/hooks'
+import { Avatar } from './Avatar'
 
 export function Header() {
   const [params] = useSearchParams()
@@ -35,6 +36,7 @@ export function Header() {
         {me.data ? (
           <>
             <Link className="button" to="/new">发帖</Link>
+            <Avatar user={me.data} size={22} />
             <span className="who">{me.data.nickname ?? me.data.username}</span>
             <button type="button" className="linklike" disabled={logout.isPending}
                     onClick={() => logout.mutate()}>

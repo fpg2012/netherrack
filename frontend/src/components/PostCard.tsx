@@ -3,6 +3,7 @@ import type { Post } from '../types'
 import { renderMath } from '../lib/math'
 import { datetime, displayName } from '../lib/format'
 import { MarkdownEditor } from './MarkdownEditor'
+import { Avatar } from './Avatar'
 
 interface Props {
   post: Post
@@ -30,6 +31,7 @@ export function PostCard({
   return (
     <div className={best ? 'post best-answer' : 'post'} id={`p${post.id}`}>
       <div className="post-head">
+        <span className="avatar-slot"><Avatar user={post.author} /></span>
         <span className="floor">#{post.number}</span>
         <span className="who">
           <span className="author">{displayName(post.author)}</span>
