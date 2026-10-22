@@ -1,0 +1,117 @@
+from fastapi import APIRouter, HTTPException, Query, status
+from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
+
+from app.api.deps import SessionDep
+from app.models import Discussion, DiscussionEvent, DiscussionTag, Post, Tag
+from app.schemas.common import Page
+from app.schemas.content import (
+    DiscussionBrief,
+    DiscussionDetail,
+    EventOut,
+    PostOut,
+    TimelineItem,
+)
+from app.services.content import event_text
+
+router = APIRouter(prefix="/discussions", tags=["discussions"])
+
+
+@router.get("", response_model=Page[DiscussionBrief])
+async def list_discussions(
+    session: SessionDep,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    tag: str | None = None,
+    q: str | None = None,
+) -> Page[DiscussionBrief]:
+    stmt = select(Discussion).where(Discussion.is_private.is_(False))
+    if tag:
+        stmt = stmt.where(
+            Discussion.id.in_(
+                select(DiscussionTag.discussion_id)
+                .join(Tag, Tag.id == DiscussionTag.tag_id)
+                .where(Tag.slug == tag)
+            )
+        )
+    if q:
+        stmt = stmt.where(Discussion.title.ilike(f"%{q}%"))
+
+    total = await session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+    rows = await session.scalars(
+        stmt.options(selectinload(Discussion.tags))
+        .order_by(Discussion.is_sticky.desc(), Discussion.last_posted_at.desc())
+        .limit(per_page)
+        .offset((page - 1) * per_page)
+    )
+    items = [DiscussionBrief.model_validate(d) for d in rows]
+    return Page(items=items, total=total, page=page, per_page=per_page,
+                pages=max(1, -(-total // per_page)))
+
+
+@router.get("/{discussion_id}", response_model=DiscussionDetail)
+async def get_discussion(discussion_id: int, session: SessionDep) -> DiscussionDetail:
+    discussion = await session.get(Discussion, discussion_id)
+    if discussion is None or discussion.is_private:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
+    await session.refresh(discussion, ["tags"])
+    return DiscussionDetail.model_validate(discussion)
+
+
+@router.get("/{discussion_id}/timeline", response_model=Page[TimelineItem])
+async def timeline(
+    discussion_id: int,
+    session: SessionDep,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+) -> Page[TimelineItem]:
+    """帖子按楼层号分页，夹在其中的操作记录一起返回，保持时间顺序。"""
+    discussion = await session.get(Discussion, discussion_id)
+    if discussion is None or discussion.is_private:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
+
+    total = await session.scalar(
+        select(func.count()).select_from(Post)
+        .where(Post.discussion_id == discussion_id, Post.hidden_at.is_(None))
+    ) or 0
+    posts = (await session.scalars(
+        select(Post)
+        .where(Post.discussion_id == discussion_id, Post.hidden_at.is_(None))
+        .order_by(Post.number)
+        .limit(per_page)
+        .offset((page - 1) * per_page)
+    )).all()
+
+    events: list[DiscussionEvent] = []
+    if posts:
+        events = list(await session.scalars(
+            select(DiscussionEvent)
+            .where(
+                DiscussionEvent.discussion_id == discussion_id,
+                DiscussionEvent.created_at >= posts[0].created_at,
+                DiscussionEvent.created_at <= posts[-1].created_at,
+            )
+            .order_by(DiscussionEvent.created_at)
+        ))
+
+    names = {t.id: t.name for t in await session.scalars(select(Tag))}
+    items: list[TimelineItem] = []
+    for p in posts:
+        items.append(TimelineItem(
+            type="post", id=p.id, created_at=p.created_at,
+            post=PostOut.model_validate(p),
+        ))
+    for e in events:
+        who = "匿名"
+        if e.actor is not None:
+            who = e.actor.nickname or e.actor.username
+        items.append(TimelineItem(
+            type="event", id=e.id, created_at=e.created_at,
+            event=EventOut(id=e.id, kind=e.kind,
+                           text=event_text(e.kind, e.payload, who, names),
+                           created_at=e.created_at),
+        ))
+    items.sort(key=lambda i: i.created_at)
+
+    return Page[TimelineItem](items=items, total=total, page=page, per_page=per_page,
+                              pages=max(1, -(-total // per_page)))

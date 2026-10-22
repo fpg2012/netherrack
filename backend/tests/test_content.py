@@ -1,0 +1,21 @@
+from app.services.content import render_markdown
+from app.services.s9e import to_html
+
+
+def test_math_kept_for_katex() -> None:
+    html = to_html('<r><p><MATH><s>[math:0]</s>x^2<e>[/math:0]</e></MATH></p></r>')
+    assert 'data-tex="x^2"' in html
+    assert "math-display" in html
+
+
+def test_marker_content_dropped() -> None:
+    html = to_html('<r><p><URL url="https://e.com"><s>[</s>label<e>](https://e.com)</e></URL></p></r>')
+    assert '<a href="https://e.com"' in html
+    assert "label" in html
+    assert "[math" not in html
+
+
+def test_markdown_sanitized() -> None:
+    html = render_markdown("# hi\n\n<script>alert(1)</script>")
+    assert "<h1>hi</h1>" in html
+    assert "<script" not in html
