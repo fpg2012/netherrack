@@ -14,7 +14,8 @@ function cookie(name: string): string | null {
 async function request<T>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
   const headers = new Headers(init.headers)
   headers.set('Accept', 'application/json')
-  if (init.body && !headers.has('Content-Type')) {
+  // FormData 必须让浏览器自己带 multipart boundary
+  if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
   const method = (init.method ?? 'GET').toUpperCase()
@@ -39,7 +40,10 @@ async function request<T>(path: string, init: RequestInit = {}, retry = true): P
     let detail = res.statusText
     try {
       const body = await res.json()
-      detail = body.detail ?? detail
+      const d = body.detail
+      detail = Array.isArray(d)
+        ? d.map((x: { msg?: string }) => x.msg ?? JSON.stringify(x)).join('；')
+        : typeof d === 'string' ? d : (d ? JSON.stringify(d) : detail)
     } catch {
       /* 空响应 */
     }
@@ -53,6 +57,8 @@ export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'POST', body: body === undefined ? null : JSON.stringify(body) }),
+  postForm: <T>(path: string, form: FormData) =>
+    request<T>(path, { method: 'POST', body: form }),
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),

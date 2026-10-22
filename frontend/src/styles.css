@@ -432,3 +432,7 @@ table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
 @media (prefers-color-scheme: dark) {
   .avatar-fallback { background: #2c2c2c; color: #aaa; }
 }
+
+/* 编辑器工具栏 */
+.editor-tools { display: flex; align-items: center; gap: .8em; }
+.editor-tools .linklike { font-size: 100%; }
