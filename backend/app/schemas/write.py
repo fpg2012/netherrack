@@ -23,3 +23,8 @@ class EditDiscussion(BaseModel):
     tags: list[str] | None = Field(default=None, max_length=5)
     best_answer_post_id: int | None = None
     is_public: bool | None = None
+    is_collapsed: bool | None = None
+
+
+class CollapsePost(BaseModel):
+    is_collapsed: bool

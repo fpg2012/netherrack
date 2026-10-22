@@ -14,7 +14,7 @@ async def list_tags(session: SessionDep, user: OptionalUser) -> list[TagWithCoun
     counts = (
         select(DiscussionTag.tag_id, func.count().label("n"))
         .join(Discussion, Discussion.id == DiscussionTag.discussion_id)
-        .where(discussion_visible(user))
+        .where(discussion_visible(user), Discussion.is_collapsed.is_(False))
         .group_by(DiscussionTag.tag_id)
         .subquery()
     )

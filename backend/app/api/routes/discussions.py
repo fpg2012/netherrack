@@ -34,7 +34,9 @@ async def list_discussions(
     tag: str | None = None,
     q: str | None = None,
 ) -> Page[DiscussionBrief]:
-    stmt = select(Discussion).where(discussion_visible(user))
+    # 折叠的讨论不进列表（对所有人）
+    stmt = select(Discussion).where(discussion_visible(user),
+                                    Discussion.is_collapsed.is_(False))
     if tag:
         stmt = stmt.where(
             Discussion.id.in_(
@@ -115,10 +117,12 @@ async def timeline(
     names = {t.id: t.name for t in await session.scalars(select(Tag))}
     items: list[TimelineItem] = []
     for p in posts:
-        items.append(TimelineItem(
-            type="post", id=p.id, created_at=p.created_at,
-            post=PostOut.model_validate(p),
-        ))
+        out = PostOut.model_validate(p)
+        if p.is_collapsed:
+            # 只给占位，正文和 Markdown 原文都不下发
+            out.body_html = ""
+            out.body_md = None
+        items.append(TimelineItem(type="post", id=p.id, created_at=p.created_at, post=out))
     for e in events:
         who = "匿名"
         if e.actor is not None:
@@ -247,9 +251,10 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
         raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
 
     is_owner = discussion.author_id == user.id
+    # 设为公开：管理员和楼主都可以；置顶/锁定/最佳回复/折叠只有管理员
     admin_only = any(v is not None for v in (
         payload.is_sticky, payload.is_locked, payload.best_answer_post_id,
-        payload.is_public))
+        payload.is_collapsed))
     if not user.is_admin and not (is_owner and not admin_only):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "无权修改该讨论")
 
@@ -279,7 +284,17 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
                     {"added": sorted(new - old), "removed": sorted(old - new)})
 
     if payload.is_public is not None and payload.is_public != discussion.is_public:
+        if payload.is_public and discussion.is_collapsed:
+            raise HTTPException(status.HTTP_409_CONFLICT, "折叠的讨论不能设为公开")
         discussion.is_public = payload.is_public
+
+    if payload.is_collapsed is not None and payload.is_collapsed != discussion.is_collapsed:
+        discussion.is_collapsed = payload.is_collapsed
+        if payload.is_collapsed:
+            # 折叠的讨论一定不公开
+            discussion.is_public = False
+        _record(session, discussion.id, user.id, "discussionCollapsed",
+                {"collapsed": payload.is_collapsed})
 
     if payload.best_answer_post_id is not None:
         post = await session.get(Post, payload.best_answer_post_id)

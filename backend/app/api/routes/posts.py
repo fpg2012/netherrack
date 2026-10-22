@@ -6,7 +6,7 @@ from app.api.deps import CurrentUser, SessionDep, verify_csrf
 from app.core.ratelimit import limiter
 from app.models import Discussion, Post
 from app.schemas.content import PostOut
-from app.schemas.write import EditPost
+from app.schemas.write import CollapsePost, EditPost
 from app.services.content import render_markdown
 from app.services.search import index_text
 
@@ -51,3 +51,24 @@ async def hide_post(post_id: int, session: SessionDep, user: CurrentUser) -> Non
     if discussion:
         discussion.post_count = max(0, discussion.post_count - 1)
     await session.commit()
+
+
+@router.patch("/{post_id}/collapse", response_model=PostOut,
+              dependencies=[Depends(verify_csrf)])
+@limiter.limit("120/hour")
+async def collapse_post(request: Request, post_id: int, payload: CollapsePost,
+                        session: SessionDep, user: CurrentUser) -> PostOut:
+    if not user.is_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "只有管理员可以折叠")
+    post = await session.get(Post, post_id)
+    if post is None or post.hidden_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "帖子不存在")
+    if post.is_collapsed != payload.is_collapsed:
+        post.is_collapsed = payload.is_collapsed
+        await session.commit()
+    await session.refresh(post, ["author"])
+    out = PostOut.model_validate(post)
+    if post.is_collapsed:
+        out.body_html = ""
+        out.body_md = None
+    return out

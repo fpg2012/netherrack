@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
-  useDiscussion, useEditDiscussion, useEditPost, useMe, useReply, useTags, useTimeline,
+  useCollapsePost, useDiscussion, useEditDiscussion, useEditPost, useMe, useReply, useTags,
+  useTimeline,
 } from '../api/hooks'
 import { PostCard } from '../components/PostCard'
 import { Dropdown } from '../components/Dropdown'
+import type { MenuItem } from '../components/Dropdown'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { datetime, displayName } from '../lib/format'
 import type { Post } from '../types'
@@ -21,6 +23,7 @@ export function DiscussionPage() {
   const reply = useReply(discussionId)
   const editPost = useEditPost(discussionId)
   const editDiscussion = useEditDiscussion(discussionId)
+  const collapsePost = useCollapsePost(discussionId)
 
   const [draft, setDraft] = useState('')
   const [quote, setQuote] = useState<Post | null>(null)
@@ -54,10 +57,11 @@ export function DiscussionPage() {
           {displayName(d.author)} · {datetime(d.created_at)} · {timeline.data?.total ?? d.post_count} 帖
           {d.is_sticky && ' · 已置顶'}
           {d.is_locked && ' · 已锁定'}
+          {d.is_collapsed && ' · 已折叠'}
         </p>
-        {isAdmin && (
+        {(isAdmin || isAuthor) && (
           <Dropdown
-            label="管理"
+            label={isAdmin ? '管理' : '操作'}
             items={[
               {
                 label: '改标签…',
@@ -68,20 +72,31 @@ export function DiscussionPage() {
               },
               { divider: true },
               {
-                label: d.is_sticky ? '取消置顶' : '置顶',
-                disabled: editDiscussion.isPending,
-                onSelect: () => editDiscussion.mutate({ is_sticky: !d.is_sticky }),
-              },
-              {
-                label: d.is_locked ? '解锁' : '锁定',
-                disabled: editDiscussion.isPending,
-                onSelect: () => editDiscussion.mutate({ is_locked: !d.is_locked }),
-              },
-              {
                 label: d.is_public ? '转为私密' : '设为公开',
-                disabled: editDiscussion.isPending,
+                // 折叠的讨论一定不公开，这个选项直接禁用
+                disabled: editDiscussion.isPending || d.is_collapsed,
                 onSelect: () => editDiscussion.mutate({ is_public: !d.is_public }),
               },
+              ...(isAdmin
+                ? ([
+                    { divider: true },
+                    {
+                      label: d.is_sticky ? '取消置顶' : '置顶',
+                      disabled: editDiscussion.isPending,
+                      onSelect: () => editDiscussion.mutate({ is_sticky: !d.is_sticky }),
+                    },
+                    {
+                      label: d.is_locked ? '解锁' : '锁定',
+                      disabled: editDiscussion.isPending,
+                      onSelect: () => editDiscussion.mutate({ is_locked: !d.is_locked }),
+                    },
+                    {
+                      label: d.is_collapsed ? '解除折叠' : '折叠讨论',
+                      disabled: editDiscussion.isPending,
+                      onSelect: () => editDiscussion.mutate({ is_collapsed: !d.is_collapsed }),
+                    },
+                  ] satisfies MenuItem[])
+                : []),
             ]}
           />
         )}
@@ -93,18 +108,6 @@ export function DiscussionPage() {
             <Link to={`/?tag=${t.slug}`}>{t.name}</Link>
           </span>
         ))}
-        {!isAdmin && isAuthor && (
-          <button
-            type="button"
-            className="linklike"
-            onClick={() => {
-              setPicked(d.tags.map((t) => t.slug))
-              setTagEditor((v) => !v)
-            }}
-          >
-            {tagEditor ? '收起' : '改标签'}
-          </button>
-        )}
       </div>
 
       {tagEditor && (
@@ -161,6 +164,8 @@ export function DiscussionPage() {
             onQuote={onQuote}
             onEdit={(postId, body) => editPost.mutate({ id: postId, body_md: body })}
             onBest={(postId) => editDiscussion.mutate({ best_answer_post_id: postId })}
+            onCollapse={(postId, collapsed) =>
+              collapsePost.mutate({ id: postId, is_collapsed: collapsed })}
             saving={editPost.isPending}
           />
         ) : null,

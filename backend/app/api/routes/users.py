@@ -35,13 +35,14 @@ async def list_users(
     post_counts = (
         select(Post.author_id, func.count().label("n"))
         .join(Discussion, Discussion.id == Post.discussion_id)
-        .where(Post.hidden_at.is_(None), discussion_visible(viewer))
+        .where(Post.hidden_at.is_(None), Post.is_collapsed.is_(False),
+               discussion_visible(viewer), Discussion.is_collapsed.is_(False))
         .group_by(Post.author_id)
         .subquery()
     )
     discussion_counts = (
         select(Discussion.author_id, func.count().label("n"))
-        .where(discussion_visible(viewer))
+        .where(discussion_visible(viewer), Discussion.is_collapsed.is_(False))
         .group_by(Discussion.author_id)
         .subquery()
     )
@@ -180,11 +181,13 @@ async def _counts(session, user_id: int, viewer) -> tuple[int, int]:
         select(func.count()).select_from(Post)
         .join(Discussion, Discussion.id == Post.discussion_id)
         .where(Post.author_id == user_id, Post.hidden_at.is_(None),
-               discussion_visible(viewer))
+               Post.is_collapsed.is_(False),
+               discussion_visible(viewer), Discussion.is_collapsed.is_(False))
     ) or 0
     discussions = await session.scalar(
         select(func.count()).select_from(Discussion)
-        .where(Discussion.author_id == user_id, discussion_visible(viewer))
+        .where(Discussion.author_id == user_id,
+               discussion_visible(viewer), Discussion.is_collapsed.is_(False))
     ) or 0
     return posts, discussions
 
@@ -212,7 +215,8 @@ async def user_discussions(
 ) -> Page[DiscussionBrief]:
     stmt = (
         select(Discussion)
-        .where(Discussion.author_id == user_id, discussion_visible(viewer))
+        .where(Discussion.author_id == user_id,
+               discussion_visible(viewer), Discussion.is_collapsed.is_(False))
     )
     total = await session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     rows = await session.scalars(
@@ -235,7 +239,8 @@ async def user_posts(
         select(Post, Discussion.title)
         .join(Discussion, Discussion.id == Post.discussion_id)
         .where(Post.author_id == user_id, Post.hidden_at.is_(None),
-               discussion_visible(viewer))
+               Post.is_collapsed.is_(False),
+               discussion_visible(viewer), Discussion.is_collapsed.is_(False))
     )
     total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
     rows = await session.execute(

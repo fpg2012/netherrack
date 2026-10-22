@@ -24,6 +24,7 @@ export interface DiscussionBrief {
   is_sticky: boolean
   is_locked: boolean
   is_public: boolean
+  is_collapsed: boolean
   post_count: number
   created_at: string
   last_posted_at: string | null
@@ -43,6 +44,7 @@ export interface Post {
   body_html: string
   body_md: string | null
   is_legacy: boolean
+  is_collapsed: boolean
   author: UserBrief | null
 }
 

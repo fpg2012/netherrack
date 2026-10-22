@@ -59,6 +59,7 @@ EVENT_TEXT = {
     "discussionLocked": "锁定了该讨论",
     "recipientsModified": "修改了参与者",
     "recipientLeft": "退出了该讨论",
+    "discussionCollapsed": "折叠了该讨论",
 }
 
 
@@ -86,6 +87,9 @@ def event_text(kind: str, payload: object, who: str, tag_names: dict[int, str]) 
         return f"{who} 修改了参与者"
     if kind == "recipientLeft":
         return f"{who} 退出了该讨论"
+    if kind == "discussionCollapsed":
+        data = payload if isinstance(payload, dict) else {}
+        return f"{who} {'折叠' if data.get('collapsed') else '取消折叠'}了该讨论"
     return f"{who} {kind}"
 
 

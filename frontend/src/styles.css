@@ -836,3 +836,27 @@ pre.is-folded {
   .fold-toggle { border-color: #3a3a3a; color: #9a9a9a; }
   .fold-toggle:hover { color: #d8d8d8; background: #242424; }
 }
+
+/* 折叠的楼层 */
+.folded {
+  margin-right: 1.2em;
+  padding: 0 .4em;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 70%;
+  line-height: 1.5;
+  color: #888;
+  white-space: nowrap;
+}
+.collapsed-note {
+  margin: .6em .9em;
+  color: #888;
+  font-size: 90%;
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+  .folded { border-color: #444; color: #888; }
+  .collapsed-note { color: #8a8a8a; }
+}

@@ -55,6 +55,8 @@ class Discussion(Base):
     author_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     is_sticky: Mapped[bool] = mapped_column(Boolean, default=False)
     is_locked: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 折叠：不在列表出现，且强制不公开
+    is_collapsed: Mapped[bool] = mapped_column(Boolean, default=False)
     # 默认私密：只有显式标记为 public 的讨论才允许游客查看
     is_public: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     post_count: Mapped[int] = mapped_column(Integer, default=0)
@@ -94,6 +96,8 @@ class Post(Base):
     body_md: Mapped[str | None] = mapped_column(Text)      # 新帖子用 Markdown
     body_html: Mapped[str] = mapped_column(Text)           # 渲染 + 清洗后的 HTML
     is_legacy: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 楼层被折叠时正文不下发，前端只显示占位文字
+    is_collapsed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     edited_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))

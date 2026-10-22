@@ -92,6 +92,15 @@ export function useEditPost(discussionId: number) {
   })
 }
 
+export function useCollapsePost(discussionId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, is_collapsed }: { id: number; is_collapsed: boolean }) =>
+      api.patch<Post>(`/posts/${id}/collapse`, { is_collapsed }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['timeline', discussionId] }),
+  })
+}
+
 export function useEditDiscussion(discussionId: number) {
   const qc = useQueryClient()
   return useMutation({
@@ -100,6 +109,7 @@ export function useEditDiscussion(discussionId: number) {
       is_sticky?: boolean
       is_locked?: boolean
       is_public?: boolean
+      is_collapsed?: boolean
       tags?: string[]
       best_answer_post_id?: number
     }) => api.patch<DiscussionDetail>(`/discussions/${discussionId}`, body),

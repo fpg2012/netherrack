@@ -33,7 +33,8 @@ async def _run(session, tsq: ColumnElement, page: int, per_page: int) -> tuple[i
     base = (
         select(Post, Discussion.title)
         .join(Discussion, Discussion.id == Post.discussion_id)
-        .where(Post.hidden_at.is_(None), matched)
+        .where(Post.hidden_at.is_(None), Post.is_collapsed.is_(False),
+               Discussion.is_collapsed.is_(False), matched)
     )
     total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
     if total == 0:
@@ -85,6 +86,8 @@ async def search(
             .join(Discussion, Discussion.id == Post.discussion_id)
             .where(
                 Post.hidden_at.is_(None),
+                Post.is_collapsed.is_(False),
+                Discussion.is_collapsed.is_(False),
                 or_(Post.search_text.ilike(like), Discussion.search_text.ilike(like)),
             )
         )

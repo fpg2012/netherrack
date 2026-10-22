@@ -16,11 +16,12 @@ interface Props {
   onQuote: (post: Post) => void
   onEdit: (id: number, body: string) => void
   onBest: (id: number) => void
+  onCollapse: (id: number, collapsed: boolean) => void
   saving: boolean
 }
 
 export function PostCard({
-  post, best, canEdit, canModerate, quoteOn, onQuote, onEdit, onBest, saving,
+  post, best, canEdit, canModerate, quoteOn, onQuote, onEdit, onBest, onCollapse, saving,
 }: Props) {
   const body = useRef<HTMLDivElement>(null)
   const [editing, setEditing] = useState(false)
@@ -45,16 +46,23 @@ export function PostCard({
           <span className="time">{datetime(post.created_at)}</span>
         </span>
         <span className="actions">
+          {post.is_collapsed && <span className="folded">已折叠</span>}
           {best && <span className="best">最佳回复</span>}
-          {quoteOn && (
+          {quoteOn && !post.is_collapsed && (
             <button type="button" title="引用这一楼" onClick={() => onQuote(post)}>引用</button>
           )}
-          {canEdit && !post.is_legacy && !editing && (
+          {canEdit && !post.is_legacy && !post.is_collapsed && !editing && (
             <button type="button" title="编辑这一楼"
                     onClick={() => { setDraft(post.body_md ?? ''); setEditing(true) }}>编辑</button>
           )}
-          {canModerate && !best && (
+          {canModerate && !best && !post.is_collapsed && (
             <button type="button" title="设为最佳回复" onClick={() => onBest(post.id)}>最佳</button>
+          )}
+          {canModerate && (
+            <button type="button" title={post.is_collapsed ? '解除折叠' : '折叠这一楼'}
+                    onClick={() => onCollapse(post.id, !post.is_collapsed)}>
+              {post.is_collapsed ? '展开' : '折叠'}
+            </button>
           )}
         </span>
       </div>
@@ -71,6 +79,8 @@ export function PostCard({
             <button type="button" onClick={() => setEditing(false)}>取消</button>
           </p>
         </div>
+      ) : post.is_collapsed ? (
+        <p className="post-body collapsed-note">内容已被折叠</p>
       ) : (
         <div className="post-body" ref={body} dangerouslySetInnerHTML={{ __html: post.body_html }} />
       )}
