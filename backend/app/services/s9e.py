@@ -147,6 +147,8 @@ def _walk(el, mode, uploads=None):
 
     if tag == "POSTMENTION":
         mention = inner or el.get("username") or ""
+        # Flarum 的原始文本是 @"name"#p123，只保留 @name
+        mention = re.sub(r'@"?([^"@\s#]+)"?(?:#p\d+)?', r"@\1", mention)
         mention = mention if mention.startswith("@") else "@" + mention
         return f'<span class="mention">{mention}</span>' if mode == "html" else mention
 

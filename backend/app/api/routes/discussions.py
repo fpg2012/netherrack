@@ -17,7 +17,12 @@ from app.schemas.content import (
 )
 from app.schemas.write import EditDiscussion, NewDiscussion, NewPost
 from app.services.content import event_text, render_markdown
-from app.services.notifications import notify_best_answer, notify_reply
+from app.services.mentions import link_mentions, username_map
+from app.services.notifications import (
+    notify_best_answer,
+    notify_mentions,
+    notify_reply,
+)
 from app.services.quote import build_quote
 from app.services.search import index_text, segment
 from app.services.visibility import can_view, discussion_visible
@@ -174,7 +179,7 @@ async def create_discussion(request: Request, payload: NewDiscussion, session: S
     session.add(discussion)
     await session.flush()
 
-    html = render_markdown(payload.body_md)
+    html, mentioned = link_mentions(render_markdown(payload.body_md), await username_map(session))
     post = Post(
         discussion_id=discussion.id,
         number=1,
@@ -186,6 +191,8 @@ async def create_discussion(request: Request, payload: NewDiscussion, session: S
     )
     session.add(post)
     await session.flush()
+    await notify_mentions(session, post_id=post.id, discussion_id=discussion.id,
+                          actor_id=user.id, user_ids=mentioned, skip=set())
 
     discussion.post_count = 1
     await session.commit()
@@ -222,7 +229,7 @@ async def reply(request: Request, discussion_id: int, payload: NewPost, session:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "引用的帖子不在该讨论中")
         body_md = build_quote(quoted) + "\n\n" + body_md
 
-    html = render_markdown(body_md)
+    html, mentioned = link_mentions(render_markdown(body_md), await username_map(session))
     post = Post(
         discussion_id=discussion_id, number=number, author_id=user.id,
         body_md=body_md, body_html=html, search_text=index_text(html),
@@ -232,6 +239,11 @@ async def reply(request: Request, discussion_id: int, payload: NewPost, session:
     discussion.post_count += 1
     discussion.last_posted_at = post.created_at
     await session.flush()
+    skip = {discussion.author_id}
+    if quoted is not None:
+        skip.add(quoted.author_id)
+    await notify_mentions(session, post_id=post.id, discussion_id=discussion.id,
+                          actor_id=user.id, user_ids=mentioned, skip=skip)
     await notify_reply(session, post=post, discussion=discussion, actor_id=user.id, quote=quoted)
     await session.commit()
     await session.refresh(post, ["author"])

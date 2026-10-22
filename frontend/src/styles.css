@@ -259,7 +259,8 @@ pre code { padding: 0; font-size: 100%; }
   aspect-ratio: 16 / 9;
   border: 1px solid #e0e0e0;
 }
-.mention { color: #555; }
+.mention { color: #555; text-decoration: none; }
+a.mention:hover { text-decoration: underline; }
 .spoiler { background: #e8e8e8; padding: 0 .2em; }
 .upload { font-size: 90%; }
 

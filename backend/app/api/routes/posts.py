@@ -8,6 +8,8 @@ from app.models import Discussion, Post
 from app.schemas.content import PostOut
 from app.schemas.write import CollapsePost, EditPost
 from app.services.content import render_markdown
+from app.services.mentions import link_mentions, username_map
+from app.services.notifications import notify_mentions
 from app.services.search import index_text
 
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -29,11 +31,17 @@ async def _get_editable(post_id: int, user, session) -> Post:
 async def edit_post(request: Request, post_id: int, payload: EditPost, session: SessionDep,
                     user: CurrentUser) -> PostOut:
     post = await _get_editable(post_id, user, session)
+    users = await username_map(session)
+    _, before = link_mentions(post.body_html, users)
     post.body_md = payload.body_md
-    post.body_html = render_markdown(payload.body_md)
+    post.body_html, after = link_mentions(render_markdown(payload.body_md), users)
     post.search_text = index_text(post.body_html)
     post.edited_at = datetime.now(UTC)
     post.edited_by_id = user.id
+    await session.flush()
+    await notify_mentions(session, post_id=post.id, discussion_id=post.discussion_id,
+                          actor_id=user.id, user_ids=after,
+                          skip={u for u in before})
     await session.commit()
     await session.refresh(post, ["author"])
     return PostOut.model_validate(post)

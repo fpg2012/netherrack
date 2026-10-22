@@ -7,6 +7,7 @@ const KIND_TEXT: Record<string, string> = {
   reply: '回复了你的讨论',
   quote: '引用了你的回复',
   best_answer: '把你的回复设为最佳',
+  mention: '在帖子里提到了你',
 }
 
 export function NotificationsPage() {

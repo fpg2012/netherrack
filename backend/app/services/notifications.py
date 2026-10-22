@@ -32,3 +32,12 @@ async def notify_reply(session, *, post: Post, discussion: Discussion, actor_id:
 async def notify_best_answer(session, *, post: Post, actor_id: int) -> None:
     await notify(session, recipient_id=post.author_id, actor_id=actor_id,
                  kind="best_answer", discussion_id=post.discussion_id, post_id=post.id)
+
+
+async def notify_mentions(session, *, post_id: int, discussion_id: int, actor_id: int,
+                          user_ids: list[int], skip: set[int]) -> None:
+    for user_id in user_ids:
+        if user_id in skip or user_id == actor_id:
+            continue
+        await notify(session, recipient_id=user_id, actor_id=actor_id,
+                     kind="mention", discussion_id=discussion_id, post_id=post_id)

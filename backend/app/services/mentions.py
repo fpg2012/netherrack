@@ -1,0 +1,69 @@
+"""@ 提及：把正文里的 @用户名 换成主页链接，并返回被提及的用户。"""
+import re
+
+from sqlalchemy import select
+
+from app.models import User
+
+# 先粗抓一个候选串，再用真实用户名做最长前缀匹配，避免把
+# 邮箱里的 @、@media 之类误判，也避免"@aaa答案"这类紧贴中文的情况
+_CANDIDATE = re.compile(r"@([A-Za-z0-9_\u4e00-\u9fff-]{1,64})")
+_TAG = re.compile(r"<[^>]+>")
+_SKIP = {"a", "code", "pre"}
+
+
+def escape_legacy(text: str) -> str:
+    """Flarum 的 @"name"#p123 还原成 @name。"""
+    return re.sub(r'@"?([^"@\s#]+)"?(?:#p\d+)?', r"@\1", text)
+
+
+def _name_at(candidate: str, names: set[str]) -> str | None:
+    for size in range(len(candidate), 0, -1):
+        if candidate[:size] in names:
+            return candidate[:size]
+    return None
+
+
+def link_mentions(markup: str, users: dict[str, tuple[int, str]]) -> tuple[str, list[int]]:
+    """返回 (替换后的 HTML, 被提及的用户 id)。"""
+    if not users or "@" not in markup:
+        return markup, []
+    names = set(users)
+    found: list[int] = []
+    out: list[str] = []
+    skip_depth = 0
+
+    for chunk in re.split(r"(<[^>]+>)", markup):
+        if chunk.startswith("<"):
+            tag = chunk[1:].split()[0].strip("/>").lower()
+            if tag in _SKIP:
+                if chunk.startswith("</"):
+                    skip_depth = max(0, skip_depth - 1)
+                elif not chunk.endswith("/>"):
+                    skip_depth += 1
+            out.append(chunk)
+            continue
+        if skip_depth or "@" not in chunk:
+            out.append(chunk)
+            continue
+
+        def repl(match: re.Match[str]) -> str:
+            name = _name_at(match.group(1), names)
+            if name is None:
+                return match.group(0)
+            user_id, display = users[name]
+            if user_id not in found:
+                found.append(user_id)
+            return f'<a class="mention" href="/u/{user_id}">@{display}</a>'
+
+        out.append(_CANDIDATE.sub(repl, chunk))
+
+    return "".join(out), found
+
+
+async def username_map(session) -> dict[str, tuple[int, str]]:
+    rows = await session.execute(select(User.id, User.username, User.nickname))
+    return {
+        username: (user_id, nickname or username)
+        for user_id, username, nickname in rows
+    }
