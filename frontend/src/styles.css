@@ -9,6 +9,8 @@ body {
   max-width: 48rem;
   padding: 0;
   line-height: 1.65;
+  /* 长 URL、长英文单词不要撑破容器 */
+  overflow-wrap: break-word;
   font-family: -apple-system, "Segoe UI", "Noto Sans CJK SC", sans-serif;
 }
 .page { padding: 1.25rem 0 3rem; }
@@ -20,6 +22,10 @@ body {
 }
 p { margin: 1em 0; }
 a, a:visited { color: inherit; }
+/* 链接允许在任意位置断行，否则超长 URL 会顶出正文 */
+a { overflow-wrap: anywhere; }
+/* 代码块保持原样，靠 pre 自己横向滚动 */
+pre, pre * { overflow-wrap: normal; word-break: normal; }
 a:hover { text-decoration: underline; }
 img { max-width: 100%; }
 h1 { margin-top: 0; font-size: 1.75em; line-height: 1.3; }
