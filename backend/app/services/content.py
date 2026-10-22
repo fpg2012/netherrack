@@ -21,7 +21,7 @@ ALLOWED_ATTRS = {
     "a": {"href", "target", "class"},
     "img": {"src", "alt", "loading", "class"},
     "span": {"class", "data-tex", "style"},
-    "div": {"class", "style"},
+    "div": {"class", "style", "data-tex"},
     "code": {"class"},
     "pre": {"class"},
     "th": {"colspan", "rowspan"},

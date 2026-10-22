@@ -29,7 +29,6 @@ export function PostCard({
 
   return (
     <div className={best ? 'post best-answer' : 'post'} id={`p${post.id}`}>
-      {best && <span className="best">最佳回复</span>}
       <div className="post-head">
         <span className="floor">#{post.number}</span>
         <span className="who">
@@ -37,16 +36,16 @@ export function PostCard({
           <span className="time">{datetime(post.created_at)}</span>
         </span>
         <span className="actions">
+          {best && <span className="best">最佳回复</span>}
           {quoteOn && (
-            <button type="button" onClick={() => onQuote(post)}>引用</button>
+            <button type="button" title="引用这一楼" onClick={() => onQuote(post)}>引用</button>
           )}
           {canEdit && !post.is_legacy && !editing && (
-            <button type="button" onClick={() => { setDraft(''); setEditing(true) }}>
-              编辑
-            </button>
+            <button type="button" title="编辑这一楼"
+                    onClick={() => { setDraft(post.body_md ?? ''); setEditing(true) }}>编辑</button>
           )}
           {canModerate && !best && (
-            <button type="button" onClick={() => onBest(post.id)}>设为最佳</button>
+            <button type="button" title="设为最佳回复" onClick={() => onBest(post.id)}>最佳</button>
           )}
         </span>
       </div>

@@ -53,6 +53,7 @@ class PostOut(BaseModel):
     created_at: datetime
     edited_at: datetime | None = None
     body_html: str
+    body_md: str | None = None
     is_legacy: bool = False
     author: UserBrief | None = None
 
