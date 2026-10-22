@@ -207,6 +207,54 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   white-space: nowrap;
 }
 
+/* 正文元素 */
+blockquote {
+  margin: 1em 0 1em 1.7em;
+  padding-left: 1em;
+  border-left: 2px solid #e6e6e6;
+  color: #606060;
+}
+code {
+  font-family: Menlo, Consolas, monospace;
+  font-size: 85%;
+}
+pre {
+  margin: 1em 0;
+  padding: .55em .8em;
+  overflow: auto;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  scrollbar-width: thin;
+  scrollbar-color: #c8c8c8 transparent;
+}
+pre code { padding: 0; font-size: 100%; }
+table {
+  margin: 1em 0;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+tbody { border-top: 1px solid; border-bottom: 1px solid; }
+th { border-top: 1px solid; padding: .25em .5em; }
+td { padding: .15em .5em; }
+.math-display {
+  /* KaTeX 自己会给 .katex-display 加 1em 上下边距，外层不再重复 */
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+}
+.math-inline { white-space: nowrap; }
+.embed { margin: 1em 0; }
+.embed iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid #e0e0e0;
+}
+.mention { color: #555; }
+.spoiler { background: #e8e8e8; padding: 0 .2em; }
+.upload { font-size: 90%; }
+
 /* 翻页 */
 .pager { margin-top: 2em; color: #606060; }
 .pager a { margin: 0 .3em; }
@@ -226,7 +274,14 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   .post.best-answer .post-head { background: #1f2a1f; border-bottom-color: #2f4a2f; }
   .best { border-color: #66bb6a; color: #66bb6a; }
   blockquote { border-left-color: #333; }
-  pre { background: #202020; border-color: #3a3a3a; }
+  pre {
+    background: #202020;
+    border-color: #3a3a3a;
+    scrollbar-color: #4a4a4a transparent;
+  }
+  tbody { border-color: #3a3a3a; }
+  th { border-color: #3a3a3a; }
+  td { border-color: #2e2e2e; }
   .embed iframe { border-color: #3a3a3a; }
   .spoiler { background: #333; }
   .mention { color: #a0a0a0; }
