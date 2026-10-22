@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import Cookie, Depends, Header, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import csrf_matches, decode_token
@@ -19,6 +20,13 @@ async def get_current_user(
     payload = decode_token(access_token, "access")
     if payload is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "登录已过期")
+    from app.models import RevokedToken
+
+    revoked = await session.scalar(
+        select(RevokedToken.id).where(RevokedToken.jti == payload.get("jti"))
+    )
+    if revoked:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "已登出")
     user = await session.get(User, int(payload["sub"]))
     if user is None or not user.is_active:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "账号不可用")

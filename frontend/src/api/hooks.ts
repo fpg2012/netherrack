@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type {
   DiscussionBrief, DiscussionDetail, Me, Page, Post, SearchHit, TagWithCount, TimelineItem,
+  UserListItem,
 } from '../types'
 
 export function useDiscussions(params: { page: number; tag?: string | null }) {
@@ -112,5 +113,26 @@ export function useEditDiscussion(discussionId: number) {
 export function usePreview() {
   return useMutation({
     mutationFn: (body_md: string) => api.post<{ html: string }>('/preview', { body_md }),
+  })
+}
+
+export function useUsers(page: number, q: string) {
+  const search = new URLSearchParams({ page: String(page) })
+  if (q) search.set('q', q)
+  return useQuery({
+    queryKey: ['users', page, q],
+    queryFn: () => api.get<Page<UserListItem>>(`/users?${search}`),
+    placeholderData: (prev) => prev,
+  })
+}
+
+export function useLogout() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.post<void>('/auth/logout'),
+    onSettled: () => {
+      qc.removeQueries({ queryKey: ['me'] })
+      qc.invalidateQueries()
+    },
   })
 }

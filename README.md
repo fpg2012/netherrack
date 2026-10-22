@@ -37,7 +37,8 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 ## 已实现（M1 + M2 写操作）
 
 - 浏览：讨论列表 / 标签筛选 / 帖子时间线 / 搜索 / 附件与 KaTeX
-- 账号：登录、登出、refresh 轮换、CSRF 双提交
+- 账号：登录、登出（立即吊销 access token）、refresh 轮换、CSRF 双提交
+- 用户列表：`/users`，按用户名筛选，显示注册时间、发帖数、讨论数
 - 发帖：`/new` 新建讨论（标题、板块、Markdown 正文）
 - 回复：讨论底部编辑器，支持引用某层楼（自动生成 Markdown 引用块）
 - 编辑：作者或管理员可改自己的帖子（迁移的旧帖只读，避免 XML↔Markdown 失真）

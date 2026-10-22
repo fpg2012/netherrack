@@ -84,3 +84,14 @@ export interface Me {
   avatar_path: string | null
   is_admin: boolean
 }
+
+export interface UserListItem {
+  id: number
+  username: string
+  nickname: string | null
+  avatar_path: string | null
+  joined_at: string
+  is_admin: boolean
+  posts: number
+  discussions: number
+}

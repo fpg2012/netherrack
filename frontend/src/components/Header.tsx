@@ -1,10 +1,11 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useMe } from '../api/hooks'
+import { useLogout, useMe } from '../api/hooks'
 
 export function Header() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const me = useMe()
+  const logout = useLogout()
 
   return (
     <header>
@@ -25,10 +26,22 @@ export function Header() {
         {me.data ? (
           <>
             <Link to="/new">发帖</Link>
-            <span className="muted"> {me.data.nickname ?? me.data.username}</span>
+            <Link to="/users">用户</Link>
+            <span className="muted">{me.data.nickname ?? me.data.username}</span>
+            <button
+              type="button"
+              className="linklike"
+              disabled={logout.isPending}
+              onClick={() => logout.mutate()}
+            >
+              退出
+            </button>
           </>
         ) : (
-          <Link to="/login">登录</Link>
+          <>
+            <Link to="/users">用户</Link>
+            <Link to="/login">登录</Link>
+          </>
         )}
       </span>
     </header>

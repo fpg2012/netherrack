@@ -23,6 +23,7 @@ from app.services.dump import parse
 TABLES = {
     "flarum_users", "flarum_tags", "flarum_discussions", "flarum_posts",
     "flarum_discussion_tag", "flarum_fof_upload_files",
+    "flarum_groups", "flarum_group_user",
 }
 
 def _dt(value: str | None) -> datetime | None:
@@ -79,6 +80,23 @@ async def import_dump(path: str) -> None:
                 is_active=not bool(row[cols["suspended_until"]]),
                 joined_at=_dt(row[cols["joined_at"]]) or datetime.now(UTC),
             ))
+        await session.commit()
+
+        # Flarum 的 Admin 组映射成 is_admin
+        gcols = {n: i for i, n in enumerate(data["flarum_groups"][0])}
+        admin_groups = {
+            _int(row[gcols["id"]])
+            for row in data["flarum_groups"][1]
+            if (row[gcols["name_singular"]] or "").lower() in {"admin", "administrator"}
+        }
+        gu_cols = {n: i for i, n in enumerate(data["flarum_group_user"][0])}
+        admin_users = [
+            _int(row[gu_cols["user_id"]])
+            for row in data["flarum_group_user"][1]
+            if _int(row[gu_cols["group_id"]]) in admin_groups
+        ]
+        for user in await session.scalars(select(User)):
+            user.is_admin = user.id in admin_users
         await session.commit()
 
         # 标签

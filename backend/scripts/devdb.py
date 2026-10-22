@@ -72,7 +72,7 @@ def start() -> None:
         _psql("CREATE DATABASE flarum OWNER flarum")
         print("已创建数据库 flarum")
 
-    print("DATABASE_URL=postgresql+asyncpg://flarum:flarum@127.0.0.1:%d/flarum" % PORT)
+    print(f"DATABASE_URL=postgresql+asyncpg://flarum:flarum@127.0.0.1:{PORT}/flarum")
 
 
 def stop() -> None:

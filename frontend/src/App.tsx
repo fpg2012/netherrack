@@ -5,6 +5,7 @@ import { DiscussionPage } from './pages/DiscussionPage'
 import { SearchPage } from './pages/SearchPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewDiscussionPage } from './pages/NewDiscussionPage'
+import { UsersPage } from './pages/UsersPage'
 
 export function App() {
   return (
@@ -16,6 +17,7 @@ export function App() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/new" element={<NewDiscussionPage />} />
+        <Route path="/users" element={<UsersPage />} />
         <Route path="*" element={<p>页面不存在。</p>} />
       </Routes>
     </>

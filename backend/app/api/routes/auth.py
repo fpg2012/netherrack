@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.api.deps import CurrentUser, SessionDep, verify_csrf
 from app.core.config import settings
@@ -14,7 +14,7 @@ from app.core.security import (
     new_csrf_token,
     verify_password,
 )
-from app.models import RefreshToken, User
+from app.models import RefreshToken, RevokedToken, User
 from app.schemas.auth import LoginIn, LoginOut, UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -95,7 +95,20 @@ async def logout(
     session: SessionDep,
     _: Annotated[None, Depends(verify_csrf)],
     refresh_cookie: Annotated[str | None, Cookie(alias="refresh_token")] = None,
+    access_cookie: Annotated[str | None, Cookie(alias="access_token")] = None,
 ) -> None:
+    # 立即失效当前 access token（否则它在 TTL 内仍然可用）
+    payload = decode_token(access_cookie, "access") if access_cookie else None
+    if payload:
+        session.add(RevokedToken(
+            jti=payload["jti"],
+            expires_at=datetime.fromtimestamp(payload["exp"], UTC),
+        ))
+        # 顺手清掉过期的黑名单条目，表不会无限增长
+        await session.execute(
+            delete(RevokedToken).where(RevokedToken.expires_at < datetime.now(UTC))
+        )
+        await session.commit()
     if refresh_cookie:
         row = await session.scalar(
             select(RefreshToken).where(RefreshToken.token_hash == hash_token(refresh_cookie))

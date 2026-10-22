@@ -280,3 +280,17 @@ h2.small { font-size: 90%; font-weight: normal; color: #606060; }
   .preview { border-color: #3a3a3a; }
   .tags-picker { border-color: #3a3a3a; }
 }
+
+/* 用户列表 */
+.inline-form { margin: .5em 0 1em; display: flex; gap: .4em; }
+.inline-form input { font: inherit; padding: .1em .4em; border: 1px solid #bbb; background: #fff; color: inherit; }
+table.users { width: 100%; }
+table.users th { text-align: left; font-weight: normal; font-size: 80%; color: #606060; }
+table.users td { padding: .3em .5em; border-bottom: 1px solid #eee; }
+table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
+header .auth { display: flex; gap: .8em; align-items: baseline; }
+
+@media (prefers-color-scheme: dark) {
+  .inline-form input { background: #242424; border-color: #3a3a3a; }
+  table.users td { border-bottom-color: #2c2c2c; }
+}
