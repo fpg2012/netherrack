@@ -43,3 +43,22 @@ def test_iframe_only_from_video_hosts() -> None:
     assert _safe_iframes(evil) == ""
     # 伪装成子域也不行
     assert _safe_iframes('<iframe src="https://evil.example/?h=www.youtube.com"></iframe>') == ""
+
+
+def test_video_links_become_embeds() -> None:
+    from app.services.content import embed_videos
+
+    youtube = '<p><a href="https://youtu.be/dQw4w9WgXcQ">x</a></p>'
+    assert 'youtube-nocookie.com/embed/dQw4w9WgXcQ' in embed_videos(youtube)
+
+    bili = '<p><a href="https://www.bilibili.com/video/BV1xx411c7mD">x</a></p>'
+    assert 'player.bilibili.com/player.html?bvid=BV1xx411c7mD' in embed_videos(bili)
+
+
+def test_non_standalone_or_non_video_links_stay_links() -> None:
+    from app.services.content import embed_videos
+
+    inline = '<p>看这个 <a href="https://youtu.be/dQw4w9WgXcQ">x</a> 很好</p>'
+    assert embed_videos(inline) == inline
+    other = '<p><a href="https://example.com/x">x</a></p>'
+    assert embed_videos(other) == other

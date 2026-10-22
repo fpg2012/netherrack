@@ -331,7 +331,8 @@ a.mention:hover { text-decoration: underline; }
 .editor {
   border: 1px solid #bbb;
   border-radius: 2px;
-  overflow: hidden;
+  /* 提及候选是绝对定位的浮层，不能裁掉 */
+  overflow: visible;
   margin: .8em 0;
   background: #fff;
 }
@@ -900,4 +901,40 @@ pre.is-folded {
     background: #242424;
     border-color: #3a3a3a;
   }
+}
+
+/* @ 提及候选列表 */
+.editor-input { position: relative; }
+.mention-picker {
+  position: absolute;
+  z-index: 30;
+  list-style: none;
+  width: 13em;
+  margin: 0;
+  padding: .2em 0;
+  border: 1px solid #d5d5d5;
+  border-radius: 2px;
+  max-height: 12em;
+  overflow-y: auto;
+  background: #fdfdfd;
+}
+.mention-picker button {
+  display: flex;
+  align-items: center;
+  gap: .5em;
+  width: 100%;
+  padding: .25em .8em;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-size: 88%;
+  text-align: left;
+  cursor: pointer;
+}
+.mention-picker button:hover, .mention-picker button.active { background: #eee; }
+
+@media (prefers-color-scheme: dark) {
+  .mention-picker { background: #242424; border-color: #3a3a3a; }
+  .mention-picker button:hover, .mention-picker button.active { background: #2f2f2f; }
 }

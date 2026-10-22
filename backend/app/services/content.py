@@ -14,6 +14,7 @@ _md = (
     MarkdownIt("commonmark", {"html": False, "linkify": True, "typographer": True})
     .enable("table")
     .enable("strikethrough")
+    .enable("linkify")
 )
 
 ALLOWED_TAGS = {
@@ -55,9 +56,35 @@ def _safe_iframes(markup: str) -> str:
     return _IFRAME.sub(repl, markup)
 
 
+# 单独成段的 B 站 / YouTube 链接自动变成播放器
+_YT_URL = re.compile(
+    r"^https?://(?:www\.|m\.)?(?:youtube\.com/(?:watch\?(?:[^#]*&)?v=|shorts/|embed/)|youtu\.be/)"
+    r"([A-Za-z0-9_-]{6,})"
+)
+_BI_URL = re.compile(r"^https?://(?:www\.)?bilibili\.com/video/(BV[A-Za-z0-9]+)")
+_PARAGRAPH_LINK = re.compile(r'<p><a href="([^"]+)"[^>]*>[^<]*</a></p>')
+
+
+def _embed(url: str) -> str | None:
+    url = html.unescape(url)
+    if match := _YT_URL.match(url):
+        src = f"https://www.youtube-nocookie.com/embed/{match.group(1)}"
+    elif match := _BI_URL.match(url):
+        src = f"https://player.bilibili.com/player.html?bvid={match.group(1)}&autoplay=0"
+    else:
+        return None
+    return (f'<div class="embed"><iframe src="{src}" loading="lazy" '
+            'allowfullscreen frameborder="0"></iframe></div>')
+
+
+def embed_videos(markup: str) -> str:
+    """把「整段只有一个视频链接」的段落换成 iframe。"""
+    return _PARAGRAPH_LINK.sub(lambda m: _embed(m.group(1)) or m.group(0), markup)
+
+
 def render_markdown(text: str) -> str:
     return _safe_iframes(nh3.clean(
-        _md.render(text),
+        embed_videos(_md.render(text)),
         tags=ALLOWED_TAGS,
         attributes=ALLOWED_ATTRS,
         link_rel="noopener noreferrer",

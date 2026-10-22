@@ -127,6 +127,14 @@ export function usePreview() {
   })
 }
 
+export function useAllUsers() {
+  return useQuery({
+    queryKey: ['users', 'all'],
+    queryFn: () => api.get<Page<UserListItem>>('/users?per_page=100'),
+    staleTime: 5 * 60_000,
+  })
+}
+
 export function useUsers(page: number, q: string) {
   const search = new URLSearchParams({ page: String(page) })
   if (q) search.set('q', q)
