@@ -50,6 +50,11 @@ export function UserMenu() {
           <Link to="/settings" role="menuitem" onClick={() => setOpen(false)}>
             设置
           </Link>
+          {me.data.is_admin && (
+            <Link to="/notifications?send=1" role="menuitem" onClick={() => setOpen(false)}>
+              发送系统通知
+            </Link>
+          )}
           <button
             type="button"
             role="menuitem"

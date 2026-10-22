@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useBroadcast, useMe, useNotifications, useReadAll } from '../api/hooks'
 import { datetime, displayName } from '../lib/format'
 
@@ -15,7 +15,9 @@ export function NotificationsPage() {
   const list = useNotifications(page)
   const readAll = useReadAll()
   const broadcast = useBroadcast()
-  const [sendOpen, setSendOpen] = useState(false)
+  // 顶栏菜单「发送系统通知」跳过来时直接把表单展开
+  const [params] = useSearchParams()
+  const [sendOpen, setSendOpen] = useState(params.get('send') === '1')
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
 
