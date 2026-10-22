@@ -4,6 +4,7 @@ import { IndexPage } from './pages/IndexPage'
 import { DiscussionPage } from './pages/DiscussionPage'
 import { SearchPage } from './pages/SearchPage'
 import { LoginPage } from './pages/LoginPage'
+import { NewDiscussionPage } from './pages/NewDiscussionPage'
 
 export function App() {
   return (
@@ -14,6 +15,7 @@ export function App() {
         <Route path="/d/:id" element={<DiscussionPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/new" element={<NewDiscussionPage />} />
         <Route path="*" element={<p>页面不存在。</p>} />
       </Routes>
     </>

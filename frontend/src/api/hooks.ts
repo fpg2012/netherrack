@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type {
-  DiscussionBrief, DiscussionDetail, Me, Page, SearchHit, TagWithCount, TimelineItem,
+  DiscussionBrief, DiscussionDetail, Me, Page, Post, SearchHit, TagWithCount, TimelineItem,
 } from '../types'
 
 export function useDiscussions(params: { page: number; tag?: string | null }) {
@@ -55,5 +55,62 @@ export function useMe() {
     queryKey: ['me'],
     queryFn: () => api.get<Me>('/auth/me'),
     retry: false,
+  })
+}
+
+
+// ---------------------------------------------------------------- 写操作
+
+export function useCreateDiscussion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { title: string; body_md: string; tags: string[] }) =>
+      api.post<DiscussionDetail>('/discussions', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['discussions'] }),
+  })
+}
+
+export function useReply(discussionId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { body_md: string; quote_post_id?: number | null }) =>
+      api.post<Post>(`/discussions/${discussionId}/posts`, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['timeline', discussionId] })
+      qc.invalidateQueries({ queryKey: ['discussions'] })
+    },
+  })
+}
+
+export function useEditPost(discussionId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body_md }: { id: number; body_md: string }) =>
+      api.patch<Post>(`/posts/${id}`, { body_md }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['timeline', discussionId] }),
+  })
+}
+
+export function useEditDiscussion(discussionId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: {
+      title?: string
+      is_sticky?: boolean
+      is_locked?: boolean
+      tags?: string[]
+      best_answer_post_id?: number
+    }) => api.patch<DiscussionDetail>(`/discussions/${discussionId}`, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['discussion', discussionId] })
+      qc.invalidateQueries({ queryKey: ['timeline', discussionId] })
+      qc.invalidateQueries({ queryKey: ['discussions'] })
+    },
+  })
+}
+
+export function usePreview() {
+  return useMutation({
+    mutationFn: (body_md: string) => api.post<{ html: string }>('/preview', { body_md }),
   })
 }

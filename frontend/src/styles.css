@@ -230,3 +230,53 @@ header .auth a { text-decoration: none; }
 @media (prefers-color-scheme: dark) {
   .narrow input, .narrow button { background: #242424; border-color: #3a3a3a; }
 }
+
+/* 编辑器与操作按钮 */
+.editor textarea, .title-input, input.inline {
+  font: inherit;
+  width: 100%;
+  padding: .35em .5em;
+  border: 1px solid #bbb;
+  background: #fff;
+  color: inherit;
+}
+.editor-bar { margin: .3em 0; font-size: 85%; }
+button {
+  font: inherit;
+  font-size: 85%;
+  padding: .1em .5em;
+  border: 1px solid #bbb;
+  background: #fff;
+  color: inherit;
+  cursor: pointer;
+}
+button:disabled { opacity: .5; cursor: default; }
+.linklike {
+  border: none;
+  background: none;
+  padding: 0 .3em;
+  text-decoration: underline;
+  font-size: 85%;
+}
+.actions { margin-left: auto; display: flex; gap: .3em; }
+.actions button { font-size: 75%; padding: 0 .4em; }
+.post-head .actions { align-self: center; }
+.preview { border: 1px dashed #ccc; padding: .2em .8em; margin: .3em 0; }
+.adminbar { font-size: 85%; }
+.adminbar button { margin-right: .4em; }
+.tags-picker {
+  border: 1px solid #e0e0e0;
+  padding: .4em .8em;
+  margin: 1em 0;
+  font-size: 90%;
+}
+.tags-picker legend { font-size: 85%; color: #606060; }
+.tags-picker label { margin-right: .9em; }
+input.title-input { font-size: 1.1em; }
+h2.small { font-size: 90%; font-weight: normal; color: #606060; }
+
+@media (prefers-color-scheme: dark) {
+  .editor textarea, .title-input, input.inline, button { background: #242424; border-color: #3a3a3a; }
+  .preview { border-color: #3a3a3a; }
+  .tags-picker { border-color: #3a3a3a; }
+}

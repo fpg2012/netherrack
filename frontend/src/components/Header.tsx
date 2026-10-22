@@ -22,8 +22,14 @@ export function Header() {
         <button type="submit">搜索</button>
       </form>
       <span className="auth">
-        {me.data ? <span className="muted">{me.data.nickname ?? me.data.username}</span>
-                 : <Link to="/login">登录</Link>}
+        {me.data ? (
+          <>
+            <Link to="/new">发帖</Link>
+            <span className="muted"> {me.data.nickname ?? me.data.username}</span>
+          </>
+        ) : (
+          <Link to="/login">登录</Link>
+        )}
       </span>
     </header>
   )

@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import SessionDep
+from app.api.deps import CurrentUser, SessionDep, verify_csrf
 from app.models import Discussion, DiscussionEvent, DiscussionTag, Post, Tag
 from app.schemas.common import Page
 from app.schemas.content import (
@@ -12,7 +14,9 @@ from app.schemas.content import (
     PostOut,
     TimelineItem,
 )
-from app.services.content import event_text
+from app.schemas.write import EditDiscussion, NewDiscussion, NewPost
+from app.services.content import event_text, render_markdown
+from app.services.quote import build_quote
 
 router = APIRouter(prefix="/discussions", tags=["discussions"])
 
@@ -115,3 +119,145 @@ async def timeline(
 
     return Page[TimelineItem](items=items, total=total, page=page, per_page=per_page,
                               pages=max(1, -(-total // per_page)))
+
+
+# ---------------------------------------------------------------- 写操作
+
+async def _tags_by_slug(session, slugs: list[str]) -> list[Tag]:
+    if not slugs:
+        return []
+    rows = list(await session.scalars(select(Tag).where(Tag.slug.in_(slugs))))
+    if len(rows) != len(set(slugs)):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "包含不存在的标签")
+    return rows
+
+
+def _record(session, discussion_id: int, actor_id: int, kind: str, payload: dict) -> None:
+    session.add(DiscussionEvent(
+        discussion_id=discussion_id, actor_id=actor_id, kind=kind, payload=payload,
+    ))
+
+
+@router.post("", response_model=DiscussionDetail, status_code=201,
+             dependencies=[Depends(verify_csrf)])
+async def create_discussion(payload: NewDiscussion, session: SessionDep,
+                            user: CurrentUser) -> DiscussionDetail:
+    tags = await _tags_by_slug(session, payload.tags)
+    now = datetime.now(UTC)
+    discussion = Discussion(
+        title=payload.title,
+        author_id=user.id,
+        created_at=now,
+        last_posted_at=now,
+        tags=tags,
+    )
+    session.add(discussion)
+    await session.flush()
+
+    post = Post(
+        discussion_id=discussion.id,
+        number=1,
+        author_id=user.id,
+        body_md=payload.body_md,
+        body_html=render_markdown(payload.body_md),
+        created_at=now,
+    )
+    session.add(post)
+    await session.flush()
+
+    discussion.post_count = 1
+    await session.commit()
+    await session.refresh(discussion, ["tags", "author"])
+    return DiscussionDetail.model_validate(discussion)
+
+
+@router.post("/{discussion_id}/posts", response_model=PostOut, status_code=201,
+             dependencies=[Depends(verify_csrf)])
+async def reply(discussion_id: int, payload: NewPost, session: SessionDep,
+                user: CurrentUser) -> PostOut:
+    # 锁定行，保证楼层号并发安全
+    # 只锁 discussions 这一张表：author 是 joined 预加载，锁整行会命中外连接
+    discussion = await session.scalar(
+        select(Discussion).where(Discussion.id == discussion_id)
+        .with_for_update(of=Discussion)
+    )
+    if discussion is None or discussion.is_private:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
+    if discussion.is_locked and not user.is_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "讨论已锁定")
+
+    number = (await session.scalar(
+        select(func.coalesce(func.max(Post.number), 0)).where(
+            Post.discussion_id == discussion_id)
+    )) + 1
+
+    body_md = payload.body_md
+    if payload.quote_post_id:
+        quoted = await session.get(Post, payload.quote_post_id)
+        if quoted is None or quoted.discussion_id != discussion_id:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "引用的帖子不在该讨论中")
+        body_md = build_quote(quoted) + "\n\n" + body_md
+
+    post = Post(
+        discussion_id=discussion_id, number=number, author_id=user.id,
+        body_md=body_md, body_html=render_markdown(body_md),
+        created_at=datetime.now(UTC),
+    )
+    session.add(post)
+    discussion.post_count += 1
+    discussion.last_posted_at = post.created_at
+    await session.commit()
+    await session.refresh(post, ["author"])
+    return PostOut.model_validate(post)
+
+
+@router.patch("/{discussion_id}", response_model=DiscussionDetail,
+              dependencies=[Depends(verify_csrf)])
+async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: SessionDep,
+                          user: CurrentUser) -> DiscussionDetail:
+    # 只锁 discussions 这一张表：author 是 joined 预加载，锁整行会命中外连接
+    discussion = await session.scalar(
+        select(Discussion).where(Discussion.id == discussion_id)
+        .with_for_update(of=Discussion)
+    )
+    if discussion is None or discussion.is_private:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
+
+    is_owner = discussion.author_id == user.id
+    admin_only = any(v is not None for v in (
+        payload.is_sticky, payload.is_locked, payload.best_answer_post_id))
+    if not user.is_admin and not (is_owner and not admin_only):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "无权修改该讨论")
+
+    if payload.title and payload.title != discussion.title:
+        _record(session, discussion.id, user.id, "discussionRenamed",
+                {"old": discussion.title, "new": payload.title})
+        discussion.title = payload.title
+
+    if payload.is_sticky is not None and payload.is_sticky != discussion.is_sticky:
+        discussion.is_sticky = payload.is_sticky
+        _record(session, discussion.id, user.id, "discussionStickied",
+                {"sticky": payload.is_sticky})
+
+    if payload.is_locked is not None and payload.is_locked != discussion.is_locked:
+        discussion.is_locked = payload.is_locked
+        _record(session, discussion.id, user.id, "discussionLocked",
+                {"locked": payload.is_locked})
+
+    if payload.tags is not None:
+        tags = await _tags_by_slug(session, payload.tags)
+        old = {t.id for t in discussion.tags}
+        new = {t.id for t in tags}
+        discussion.tags = tags
+        _record(session, discussion.id, user.id, "discussionTagged",
+                {"added": sorted(new - old), "removed": sorted(old - new)})
+
+    if payload.best_answer_post_id is not None:
+        post = await session.get(Post, payload.best_answer_post_id)
+        if post is None or post.discussion_id != discussion.id:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "最佳回复不属于该讨论")
+        discussion.best_answer_post_id = post.id
+
+    await session.commit()
+    await session.refresh(discussion, ["tags", "author"])
+    return DiscussionDetail.model_validate(discussion)

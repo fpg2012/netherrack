@@ -40,6 +40,7 @@ export interface Post {
   created_at: string
   edited_at: string | null
   body_html: string
+  is_legacy: boolean
   author: UserBrief | null
 }
 

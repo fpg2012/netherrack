@@ -32,6 +32,16 @@ make -C .. frontend                   # http://localhost:5173
 cd backend && uv run alembic revision --autogenerate -m "initial schema"
 ```
 
+## 已实现（M1 + M2 写操作）
+
+- 浏览：讨论列表 / 标签筛选 / 帖子时间线 / 搜索 / 附件与 KaTeX
+- 账号：登录、登出、refresh 轮换、CSRF 双提交
+- 发帖：`/new` 新建讨论（标题、板块、Markdown 正文）
+- 回复：讨论底部编辑器，支持引用某层楼（自动生成 Markdown 引用块）
+- 编辑：作者或管理员可改自己的帖子（迁移的旧帖只读，避免 XML↔Markdown 失真）
+- 管理：置顶/锁定、改标签、设为最佳回复，都会写入 `discussion_events`
+- 预览：`POST /api/v1/preview` 与正式发帖共用同一套渲染+清洗
+
 ## 约定
 
 - **认证**：access/refresh 两个 JWT 全放 `HttpOnly` cookie；所有写操作要求
