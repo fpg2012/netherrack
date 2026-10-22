@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePreview } from '../api/hooks'
 import { api } from '../api/client'
+import { setupFolding } from '../lib/fold'
 import { renderMath } from '../lib/math'
 
 interface Props {
@@ -29,7 +30,9 @@ export function MarkdownEditor({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (showPreview && preview.data) renderMath(box.current)
+    if (!showPreview || !preview.data) return
+    renderMath(box.current)
+    return setupFolding(box.current)
   }, [showPreview, preview.data])
 
   const insert = (text: string) => {

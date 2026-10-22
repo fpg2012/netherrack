@@ -735,3 +735,37 @@ ul.posts-list li:last-child { border-bottom: 0; }
   .msg.ok { color: #66bb6a; }
   .msg.err { color: #e57373; }
 }
+
+/* 过高的代码块与图片折叠 */
+pre.is-folded {
+  max-height: 480px;
+  overflow: auto;
+}
+.img-fold.is-folded {
+  max-height: 480px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+.img-fold.is-folded img { display: block; }
+.fold-toggle {
+  display: block;
+  width: 100%;
+  margin: .35em 0 1.2em;
+  padding: .25em 0;
+  border: 0;
+  border-top: 1px dashed #d5d5d5;
+  border-bottom: 1px dashed #d5d5d5;
+  background: none;
+  color: #666;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 72%;
+  text-align: center;
+  cursor: pointer;
+}
+.fold-toggle:hover { color: #1a1a1a; background: #f6f6f6; }
+
+@media (prefers-color-scheme: dark) {
+  .img-fold.is-folded { border-color: #3a3a3a; }
+  .fold-toggle { border-color: #3a3a3a; color: #9a9a9a; }
+  .fold-toggle:hover { color: #d8d8d8; background: #242424; }
+}

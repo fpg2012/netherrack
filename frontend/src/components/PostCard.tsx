@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Post } from '../types'
 import { renderMath } from '../lib/math'
+import { setupFolding } from '../lib/fold'
 import { datetime, displayName } from '../lib/format'
 import { Link } from 'react-router-dom'
 import { MarkdownEditor } from './MarkdownEditor'
@@ -26,7 +27,9 @@ export function PostCard({
   const [draft, setDraft] = useState('')
 
   useEffect(() => {
-    if (!editing) renderMath(body.current)
+    if (editing) return
+    renderMath(body.current)
+    return setupFolding(body.current)
   }, [post.body_html, editing])
 
   return (

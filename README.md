@@ -37,6 +37,7 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 ## 已实现（M1 + M2 写操作）
 
 - 浏览：讨论列表 / 标签筛选 / 帖子时间线 / 搜索 / 附件与 KaTeX
+- 折叠：超过 480px 的代码块、超过 560px 的高图默认收起，点下方按钮展开
 - 账号：登录、登出（立即吊销 access token）、refresh 轮换、CSRF 双提交
 - 用户列表：`/users`，按用户名筛选，显示注册时间、发帖数、讨论数
 - 用户主页：`/u/:id`，资料 + 讨论/回复两个标签页
