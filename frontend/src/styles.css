@@ -234,15 +234,15 @@ pre {
   scrollbar-color: #c8c8c8 transparent;
 }
 pre code { padding: 0; font-size: 100%; }
-table {
+.post-body table {
   margin: 1em 0;
   border-collapse: collapse;
   display: block;
   overflow-x: auto;
 }
-tbody { border-top: 1px solid; border-bottom: 1px solid; }
-th { border-top: 1px solid; padding: .25em .5em; }
-td { padding: .15em .5em; }
+.post-body tbody { border-top: 1px solid; border-bottom: 1px solid; }
+.post-body th { border-top: 1px solid; padding: .25em .5em; }
+.post-body td { padding: .15em .5em; }
 .math-display {
   /* KaTeX 自己会给 .katex-display 加 1em 上下边距，外层不再重复 */
   margin: 0;
@@ -285,9 +285,8 @@ td { padding: .15em .5em; }
     border-color: #3a3a3a;
     scrollbar-color: #4a4a4a transparent;
   }
-  tbody { border-color: #3a3a3a; }
-  th { border-color: #3a3a3a; }
-  td { border-color: #2e2e2e; }
+  .post-body tbody, .post-body th { border-color: #3a3a3a; }
+  .post-body td { border-color: #2e2e2e; }
   .embed iframe { border-color: #3a3a3a; }
   .spoiler { background: #333; }
   .mention { color: #a0a0a0; }
