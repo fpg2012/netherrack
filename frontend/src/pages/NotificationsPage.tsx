@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useMe, useNotifications, useReadAll } from '../api/hooks'
+import { useBroadcast, useMe, useNotifications, useReadAll } from '../api/hooks'
 import { datetime, displayName } from '../lib/format'
 
 const KIND_TEXT: Record<string, string> = {
@@ -14,6 +14,10 @@ export function NotificationsPage() {
   const [page, setPage] = useState(1)
   const list = useNotifications(page)
   const readAll = useReadAll()
+  const broadcast = useBroadcast()
+  const [sendOpen, setSendOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
 
   if (!me.data) return <p className="muted"><Link to="/login">登录</Link> 后查看通知。</p>
 
@@ -31,18 +35,67 @@ export function NotificationsPage() {
             </button>
           </>
         )}
+        {me.data.is_admin && (
+          <>
+            {' · '}
+            <button type="button" className="linklike"
+                    onClick={() => setSendOpen((v) => !v)}>
+              {sendOpen ? '收起' : '发送系统通知'}
+            </button>
+          </>
+        )}
       </p>
+
+      {sendOpen && me.data.is_admin && (
+        <div className="notice-form">
+          <label>
+            <span>标题</span>
+            <input className="inline" value={title} maxLength={120}
+                   onChange={(e) => setTitle(e.target.value)} />
+          </label>
+          <label>
+            <span>正文</span>
+            <textarea className="inline" rows={4} value={body} maxLength={5000}
+                      onChange={(e) => setBody(e.target.value)} />
+          </label>
+          <div className="settings-actions">
+            <button type="button" className="button"
+                    disabled={broadcast.isPending || !title.trim() || !body.trim()}
+                    onClick={() => broadcast.mutate({ title, body }, {
+                      onSuccess: () => { setTitle(''); setBody(''); setSendOpen(false) },
+                    })}>
+              {broadcast.isPending ? '发送中…' : '发送给所有用户'}
+            </button>
+            {broadcast.isSuccess && (
+              <span className="msg ok">已发送给 {broadcast.data.sent} 人</span>
+            )}
+            {broadcast.isError && <span className="msg err">{broadcast.error.message}</span>}
+          </div>
+        </div>
+      )}
 
       <ul className="notifications">
         {list.data?.items.map((n) => (
           <li key={n.id} className={n.read ? '' : 'unread'}>
-            <Link to={`/d/${n.discussion_id}#p${n.post_id}`} className="notif-title">
-              {n.discussion_title}
-            </Link>
-            <div className="muted small">
-              {displayName(n.actor)} {KIND_TEXT[n.kind] ?? n.kind}
-              {n.post_number ? ` · #${n.post_number}` : ''} · {datetime(n.created_at)}
-            </div>
+            {n.kind === 'system' ? (
+              <>
+                <div className="notif-title">{n.title}</div>
+                <p className="notif-body">{n.body}</p>
+                <div className="muted small">
+                  系统通知{displayName(n.actor) ? ` · ${displayName(n.actor)}` : ''} · {datetime(n.created_at)}
+                </div>
+              </>
+            ) : (
+              <>
+                <Link to={`/d/${n.discussion_id}#p${n.post_id}`} className="notif-title">
+                  {n.discussion_title}
+                </Link>
+                <div className="muted small">
+                  {displayName(n.actor)} {KIND_TEXT[n.kind] ?? n.kind}
+                  {n.post_number ? ` · #${n.post_number}` : ''} · {datetime(n.created_at)}
+                </div>
+              </>
+            )}
           </li>
         ))}
       </ul>

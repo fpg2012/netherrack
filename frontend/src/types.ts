@@ -103,11 +103,13 @@ export interface UserListItem {
 
 export interface Notification {
   id: number
-  kind: 'reply' | 'quote' | 'best_answer'
-  discussion_id: number
-  discussion_title: string
-  post_id: number
+  kind: 'reply' | 'quote' | 'best_answer' | 'system'
+  discussion_id: number | null
+  discussion_title: string | null
+  post_id: number | null
   post_number: number | null
+  title: string | null
+  body: string | null
   actor: UserBrief | null
   read: boolean
   created_at: string

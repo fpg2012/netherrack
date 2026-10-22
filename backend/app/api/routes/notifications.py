@@ -1,13 +1,14 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 
 from app.api.deps import CurrentUser, SessionDep, verify_csrf
-from app.models import Discussion, Notification, Post
+from app.core.ratelimit import limiter
+from app.models import Discussion, Notification, Post, User
 from app.schemas.common import Page
 from app.schemas.content import UserBrief
-from app.schemas.notification import NotificationOut
+from app.schemas.notification import NoticeIn, NotificationOut
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -21,7 +22,7 @@ async def list_notifications(
 ) -> Page[NotificationOut]:
     base = (
         select(Notification, Discussion.title, Post.number)
-        .join(Discussion, Discussion.id == Notification.discussion_id)
+        .outerjoin(Discussion, Discussion.id == Notification.discussion_id)
         .outerjoin(Post, Post.id == Notification.post_id)
         .where(Notification.recipient_id == user.id)
     )
@@ -39,6 +40,8 @@ async def list_notifications(
             discussion_title=title,
             post_id=n.post_id,
             post_number=number,
+            title=n.title,
+            body=n.body,
             actor=UserBrief.model_validate(n.actor) if n.actor else None,
             read=n.read_at is not None,
             created_at=n.created_at,
@@ -83,3 +86,28 @@ async def mark_read(notification_id: int, session: SessionDep, user: CurrentUser
     if notification.read_at is None:
         notification.read_at = datetime.now(UTC)
         await session.commit()
+
+
+@router.post("/broadcast", dependencies=[Depends(verify_csrf)])
+@limiter.limit("10/hour")
+async def broadcast(request: Request, payload: NoticeIn, session: SessionDep,
+                    user: CurrentUser) -> dict[str, int]:
+    """管理员给所有用户发一条系统通知（每人一条独立记录，便于各自已读）。"""
+    if not user.is_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "只有管理员可以发送系统通知")
+    title = payload.title.strip()
+    body = payload.body.strip()
+    if not title or not body:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "标题和正文不能为空")
+    if len(title) > 120 or len(body) > 5000:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            "标题最多 120 字、正文最多 5000 字")
+
+    recipients = (await session.scalars(select(User.id).where(User.is_active.is_(True)))).all()
+    for recipient_id in recipients:
+        session.add(Notification(
+            recipient_id=recipient_id, actor_id=user.id, kind="system",
+            title=title, body=body,
+        ))
+    await session.commit()
+    return {"sent": len(recipients)}

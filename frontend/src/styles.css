@@ -860,3 +860,43 @@ pre.is-folded {
   .folded { border-color: #444; color: #888; }
   .collapsed-note { color: #8a8a8a; }
 }
+
+/* 系统通知 */
+.notif-body {
+  margin: .35em 0 0;
+  white-space: pre-wrap;
+  font-size: 92%;
+}
+.notice-form {
+  margin: 1em 0 1.4em;
+  padding: .8em 1em;
+  border: 1px solid #e3e3e3;
+}
+.notice-form label { display: block; margin: .5em 0; }
+.notice-form label > span {
+  display: block;
+  margin-bottom: .25em;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 72%;
+  color: #777;
+}
+.notice-form input.inline, .notice-form textarea.inline {
+  font: inherit;
+  font-size: 92%;
+  width: 100%;
+  padding: .3em .5em;
+  border: 1px solid #bbb;
+  border-radius: 2px;
+  background: #fff;
+  color: inherit;
+  resize: vertical;
+}
+
+@media (prefers-color-scheme: dark) {
+  .notice-form { border-color: #2e2e2e; }
+  .notice-form label > span { color: #8f8f8f; }
+  .notice-form input.inline, .notice-form textarea.inline {
+    background: #242424;
+    border-color: #3a3a3a;
+  }
+}

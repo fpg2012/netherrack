@@ -167,6 +167,15 @@ export function useUnreadCount() {
   })
 }
 
+export function useBroadcast() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { title: string; body: string }) =>
+      api.post<{ sent: number }>('/notifications/broadcast', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  })
+}
+
 export function useReadAll() {
   const qc = useQueryClient()
   return useMutation({

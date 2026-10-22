@@ -46,6 +46,8 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 - 用户主页：`/u/:id`，资料 + 讨论/回复两个标签页
 - 通知：回复、引用、最佳回复会通知对方；`/notifications` 可全部标为已读，
   顶栏「通知」显示未读数（60 秒轮询）
+- 系统通知：管理员在 `/notifications` 页发送，给每个用户各写一条记录（各自已读状态），
+  正文保留换行，限 10 次/小时
 - 顶栏：讨论 / 用户 / 通知三个入口；右侧「发帖」和用户菜单（个人主页、设置、退出登录）
 - 设置：`/settings` 改昵称、自我介绍、头像（PNG/JPEG/GIF/WebP，≤2 MB，
   校验文件头而非只看扩展名）和密码；改密码会吊销其他设备的 refresh token，
