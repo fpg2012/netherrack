@@ -159,16 +159,16 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
 .post-head {
   display: flex;
   align-items: stretch;
-  padding-right: .9em;   /* 与正文右边距一致 */
   background: #f4f4f4;
   border-bottom: 1px solid #d5d5d5;
 }
 .post-head .floor {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  min-width: 2.4em;
-  padding: .3em .1em .3em .9em;
+  justify-content: center;
+  flex: 0 0 2.2em;
+  padding: 0 .2em;
+  border-right: 1px solid #d5d5d5;
   font-family: Menlo, Consolas, monospace;
   font-size: 85%;
   color: #666;
@@ -413,7 +413,7 @@ table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* 头像 */
 .avatar {
-  border-radius: 50%;
+  border-radius: 2px;
   object-fit: cover;
   display: inline-flex;
   align-items: center;
@@ -424,7 +424,7 @@ table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
   flex: 0 0 auto;
   image-rendering: auto;
 }
-.avatar-slot { display: flex; align-items: center; padding-left: .5em; }
+.avatar-slot { display: flex; align-items: center; padding-left: .6em; }
 .user-cell { display: flex; align-items: center; gap: .5em; }
 
 @media (prefers-color-scheme: dark) {
