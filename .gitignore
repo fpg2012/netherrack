@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 .venv/
 backend/.env
+backend/.pgdata/
 backend/.ruff_cache/
 backend/.pytest_cache/
 

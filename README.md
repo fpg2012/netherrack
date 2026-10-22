@@ -12,9 +12,10 @@ data/       从 Flarum 导出的 dump 与附件（不进 git）
 ## 本地起服务
 
 ```bash
-# 1. 数据库：有 docker 用 docker，没有就自动退回 podman（需 podman + podman-compose）
-make db            # 首次会拉取 postgres:17-alpine
-# 也可以完全自备 PostgreSQL 14+，只要 DATABASE_URL 指过去
+# 1. 数据库：docker → podman → 本地 pgserver 自动回退
+make db
+#    网络受限、拉不了镜像时，直接用本地二进制（无需 root、无需镜像）：
+#    make devdb
 
 # 2. 后端
 cd backend && cp .env.example .env    # 至少改掉 JWT_SECRET
