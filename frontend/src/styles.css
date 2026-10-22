@@ -159,6 +159,7 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
 .post-head {
   display: flex;
   align-items: stretch;
+  padding: 0 .9em 0 0;    /* 右侧内边距由头部持有，左侧留给楼层栏贴边 */
   background: #f4f4f4;
   border-bottom: 1px solid #d5d5d5;
 }
@@ -167,7 +168,7 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   align-items: center;
   justify-content: center;
   flex: 0 0 2.2em;
-  padding: 0 .2em;
+  padding: 0 .2em;        /* 楼层号在 2.2em 栏内居中，视觉上自然留出左侧空白 */
   border-right: 1px solid #d5d5d5;
   font-family: Menlo, Consolas, monospace;
   font-size: 85%;
@@ -309,7 +310,6 @@ button:disabled { opacity: .5; cursor: default; }
 }
 .post-head .actions {
   margin-left: auto;
-  padding-right: .9em;    /* 与正文右边距一致，避免按钮压到边框外 */
   align-self: center;
   display: flex;
   align-items: center;
