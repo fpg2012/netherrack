@@ -17,6 +17,7 @@ from app.schemas.content import (
 from app.schemas.write import EditDiscussion, NewDiscussion, NewPost
 from app.services.content import event_text, render_markdown
 from app.services.quote import build_quote
+from app.services.search import index_text, segment
 
 router = APIRouter(prefix="/discussions", tags=["discussions"])
 
@@ -153,6 +154,7 @@ async def create_discussion(payload: NewDiscussion, session: SessionDep,
     now = datetime.now(UTC)
     discussion = Discussion(
         title=payload.title,
+        search_text=segment(payload.title),
         author_id=user.id,
         created_at=now,
         last_posted_at=now,
@@ -161,12 +163,14 @@ async def create_discussion(payload: NewDiscussion, session: SessionDep,
     session.add(discussion)
     await session.flush()
 
+    html = render_markdown(payload.body_md)
     post = Post(
         discussion_id=discussion.id,
         number=1,
         author_id=user.id,
         body_md=payload.body_md,
-        body_html=render_markdown(payload.body_md),
+        body_html=html,
+        search_text=index_text(html),
         created_at=now,
     )
     session.add(post)
@@ -205,9 +209,10 @@ async def reply(discussion_id: int, payload: NewPost, session: SessionDep,
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "引用的帖子不在该讨论中")
         body_md = build_quote(quoted) + "\n\n" + body_md
 
+    html = render_markdown(body_md)
     post = Post(
         discussion_id=discussion_id, number=number, author_id=user.id,
-        body_md=body_md, body_html=render_markdown(body_md),
+        body_md=body_md, body_html=html, search_text=index_text(html),
         created_at=datetime.now(UTC),
     )
     session.add(post)
@@ -240,6 +245,7 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
         _record(session, discussion.id, user.id, "discussionRenamed",
                 {"old": discussion.title, "new": payload.title})
         discussion.title = payload.title
+        discussion.search_text = segment(payload.title)
 
     if payload.is_sticky is not None and payload.is_sticky != discussion.is_sticky:
         discussion.is_sticky = payload.is_sticky

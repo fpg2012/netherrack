@@ -1,5 +1,5 @@
 # 数据库优先用 docker，没有 docker daemon 就退回 podman（两者都免 root 配置）
-.PHONY: db db-down db-logs devdb devdb-stop backend frontend install migrate import test lint build
+.PHONY: db db-down db-logs devdb devdb-stop backend frontend install migrate import import-force reindex test lint build
 
 db:            ## 启动本地 PostgreSQL（docker → podman → pgserver 自动回退）
 	./scripts/db.sh up
@@ -25,6 +25,9 @@ migrate:
 
 import:
 	cd backend && uv run python -m app.importers.flarum
+
+reindex:       ## 重建搜索分词（改分词方式后跑一次）
+	cd backend && uv run python -m scripts.reindex_search
 
 import-force:
 	cd backend && uv run python -m app.importers.flarum --force

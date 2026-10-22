@@ -7,6 +7,7 @@ from app.models import Discussion, Post
 from app.schemas.content import PostOut
 from app.schemas.write import EditPost
 from app.services.content import render_markdown
+from app.services.search import index_text
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -28,6 +29,7 @@ async def edit_post(post_id: int, payload: EditPost, session: SessionDep,
     post = await _get_editable(post_id, user, session)
     post.body_md = payload.body_md
     post.body_html = render_markdown(payload.body_md)
+    post.search_text = index_text(post.body_html)
     post.edited_at = datetime.now(UTC)
     post.edited_by_id = user.id
     await session.commit()

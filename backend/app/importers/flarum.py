@@ -19,6 +19,7 @@ from app.db.session import SessionLocal
 from app.models import Discussion, DiscussionEvent, DiscussionTag, Post, Tag, Upload, User
 from app.services.content import render_legacy_s9e
 from app.services.dump import parse
+from app.services.search import index_text, segment
 
 TABLES = {
     "flarum_users", "flarum_tags", "flarum_discussions", "flarum_posts",
@@ -154,6 +155,7 @@ async def import_dump(path: str, force: bool = False) -> None:
             session.add(Discussion(
                 id=_int(row[dcols["id"]]),
                 title=row[dcols["title"]],
+                search_text=segment(row[dcols["title"]]),
                 slug=row[dcols["slug"]] or None,
                 author_id=_int(row[dcols["user_id"]]),
                 is_sticky=row[dcols["is_sticky"]] == "1",
@@ -194,15 +196,17 @@ async def import_dump(path: str, force: bool = False) -> None:
                 ))
                 continue
 
+            html = render_legacy_s9e(
+                row[pcols["content"]] or "",
+                {u: None for u in uploads},       # 只需要 uuid 存在性
+            )
             session.add(Post(
                 id=pid,
                 discussion_id=did,
                 number=_int(row[pcols["number"]], 1),
                 author_id=_int(row[pcols["user_id"]]),
-                body_html=render_legacy_s9e(
-                    row[pcols["content"]] or "",
-                    {u: None for u in uploads},   # 只需要 uuid 存在性
-                ),
+                body_html=html,
+                search_text=index_text(html),
                 is_legacy=True,
                 created_at=created,
                 edited_at=_dt(row[pcols["edited_at"]]),

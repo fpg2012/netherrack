@@ -4,6 +4,7 @@ from typing import Any
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    Computed,
     DateTime,
     ForeignKey,
     Index,
@@ -13,7 +14,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -44,6 +45,12 @@ class Discussion(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(Text)
+    # 标题的分词结果，供全文检索使用（中文没有空格，simple 配置切不开）
+    search_text: Mapped[str] = mapped_column(Text, default="", server_default="")
+    title_vector: Mapped[str] = mapped_column(
+        TSVECTOR,
+        Computed("to_tsvector('simple', search_text)", persisted=True),
+    )
     slug: Mapped[str | None] = mapped_column(String(255))
     author_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     is_sticky: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -62,7 +69,10 @@ class Discussion(Base):
         "Tag", secondary="discussion_tags", lazy="selectin", order_by="Tag.position"
     )
 
-    __table_args__ = (Index("ix_discussions_last_posted", "last_posted_at"),)
+    __table_args__ = (
+        Index("ix_discussions_last_posted", "last_posted_at"),
+        Index("ix_discussions_title_vector", "title_vector", postgresql_using="gin"),
+    )
 
 
 class Post(Base):
@@ -74,6 +84,12 @@ class Post(Base):
     )
     number: Mapped[int] = mapped_column(Integer)
     author_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    search_text: Mapped[str] = mapped_column(Text, default="", server_default="")
+    # 由 search_text 自动生成，写入时不用手动同步
+    search_vector: Mapped[str] = mapped_column(
+        TSVECTOR,
+        Computed("to_tsvector('simple', search_text)", persisted=True),
+    )
     body_md: Mapped[str | None] = mapped_column(Text)      # 新帖子用 Markdown
     body_html: Mapped[str] = mapped_column(Text)           # 渲染 + 清洗后的 HTML
     is_legacy: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -86,6 +102,7 @@ class Post(Base):
 
     __table_args__ = (
         UniqueConstraint("discussion_id", "number", name="uq_post_number"),
+        Index("ix_posts_search_vector", "search_vector", postgresql_using="gin"),
         Index("ix_posts_discussion_number", "discussion_id", "number"),
     )
 
