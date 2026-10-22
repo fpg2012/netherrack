@@ -149,7 +149,6 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
 
 /* 每层楼：楼层号一栏，作者/时间一栏 */
 .post {
-  --gutter: 3em;          /* 楼层栏 + 内边距，正文据此对齐作者名 */
   position: relative;
   border: 1px solid;
   margin: 1.2em 0;
@@ -167,10 +166,7 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
 .post-head .floor {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex: 0 0 2.2em;
-  padding: 0 .2em;
-  border-right: 1px solid #d5d5d5;
+  padding: .3em 0 .3em .9em;
   font-family: Menlo, Consolas, monospace;
   font-size: 85%;
   color: #666;
@@ -179,14 +175,14 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: .3em .8em;
+  padding: .3em .7em;
   line-height: 1.35;
 }
 .post-head .author { font-weight: bold; }
 .post-head .time { color: #666; font-size: 80%; }
-.post-body { padding: .2em .9em 0 calc(.9em + var(--gutter)); }
+.post-body { padding: .2em .9em 0; }
 .edited {
-  margin: .5em .9em 0 calc(.9em + var(--gutter));
+  margin: .5em .9em 0;
   color: #888;
   font-size: 80%;
 }
