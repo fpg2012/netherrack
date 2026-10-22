@@ -21,7 +21,7 @@ make db
 cd backend && cp .env.example .env    # 至少改掉 JWT_SECRET
 make -C .. install
 make -C .. migrate
-make -C .. import
+make -C .. import        # 站上已有新帖时会拒绝执行，需 --force 才清空
 make -C .. backend                    # http://127.0.0.1:8000/api/docs
 
 # 3. 前端

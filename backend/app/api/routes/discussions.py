@@ -42,9 +42,16 @@ async def list_discussions(
         stmt = stmt.where(Discussion.title.ilike(f"%{q}%"))
 
     total = await session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+
+    # 置顶是「板块内」的概念：只有筛了标签才把置顶提到前面，
+    # 「全部」按最后回复时间排，否则置顶帖会永远霸占首页
+    order = [Discussion.last_posted_at.desc().nullslast()]
+    if tag:
+        order.insert(0, Discussion.is_sticky.desc())
+
     rows = await session.scalars(
         stmt.options(selectinload(Discussion.tags))
-        .order_by(Discussion.is_sticky.desc(), Discussion.last_posted_at.desc())
+        .order_by(*order)
         .limit(per_page)
         .offset((page - 1) * per_page)
     )

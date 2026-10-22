@@ -26,6 +26,9 @@ migrate:
 import:
 	cd backend && uv run python -m app.importers.flarum
 
+import-force:
+	cd backend && uv run python -m app.importers.flarum --force
+
 backend:
 	cd backend && uv run uvicorn app.main:app --reload --port 8000
 

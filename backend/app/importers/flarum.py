@@ -60,12 +60,24 @@ async def reset(session) -> None:
     await session.commit()
 
 
-async def import_dump(path: str) -> None:
+async def import_dump(path: str, force: bool = False) -> None:
     data = parse(path, TABLES)
     users = data["flarum_users"][1]
     cols = {name: idx for idx, name in enumerate(data["flarum_users"][0])}
 
     async with SessionLocal() as session:
+        # 导入会清空数据库：只要存在「不是从 Flarum 迁移来的」帖子，就说明站上
+        # 已经有真实内容，必须显式 --force 才允许覆盖
+        existing = await session.scalar(
+            select(func.count()).select_from(Post).where(Post.is_legacy.is_(False))
+        ) or 0
+        if existing and not force:
+            print(
+                f"拒绝导入：数据库里有 {existing} 条站内新建的帖子。\n"
+                "如果确定要清空重建，请加 --force。",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
         await reset(session)
 
         for row in users:
@@ -228,8 +240,9 @@ async def import_dump(path: str) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description="导入 Flarum dump")
     ap.add_argument("--dump", default=str(settings.legacy_dump))
+    ap.add_argument("--force", action="store_true", help="即使站内已有新帖也清空重建")
     args = ap.parse_args()
-    asyncio.run(import_dump(args.dump))
+    asyncio.run(import_dump(args.dump, force=args.force))
 
 
 if __name__ == "__main__":
