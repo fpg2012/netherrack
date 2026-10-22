@@ -8,7 +8,7 @@ from app.models import Discussion, Post
 from app.schemas.content import PostOut
 from app.schemas.write import CollapsePost, EditPost
 from app.services.content import render_markdown
-from app.services.mentions import link_mentions, username_map
+from app.services.mentions import link_mentions, mentionable_users
 from app.services.notifications import notify_mentions
 from app.services.search import index_text
 
@@ -31,7 +31,7 @@ async def _get_editable(post_id: int, user, session) -> Post:
 async def edit_post(request: Request, post_id: int, payload: EditPost, session: SessionDep,
                     user: CurrentUser) -> PostOut:
     post = await _get_editable(post_id, user, session)
-    users = await username_map(session)
+    users = await mentionable_users(session, post.discussion_id)
     _, before = link_mentions(post.body_html, users)
     post.body_md = payload.body_md
     post.body_html, after = link_mentions(render_markdown(payload.body_md), users)

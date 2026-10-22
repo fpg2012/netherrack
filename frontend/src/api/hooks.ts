@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type {
   DiscussionBrief, DiscussionDetail, Me, Notification, Page, Post, SearchHit, TagWithCount,
-  TimelineItem, UserListItem, UserPost, UserProfile,
+  TimelineItem, UserBrief, UserListItem, UserPost, UserProfile,
 } from '../types'
 
 export function useDiscussions(params: { page: number; tag?: string | null }) {
@@ -124,6 +124,14 @@ export function useEditDiscussion(discussionId: number) {
 export function usePreview() {
   return useMutation({
     mutationFn: (body_md: string) => api.post<{ html: string }>('/preview', { body_md }),
+  })
+}
+
+export function useMentionable(discussionId: number) {
+  return useQuery({
+    queryKey: ['mentionable', discussionId],
+    queryFn: () => api.get<UserBrief[]>(`/discussions/${discussionId}/mentionable`),
+    staleTime: 60_000,
   })
 }
 

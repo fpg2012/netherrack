@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Post } from '../types'
+import type { Post, UserBrief } from '../types'
 import { renderMath } from '../lib/math'
 import { setupFolding } from '../lib/fold'
 import { datetime, displayName } from '../lib/format'
@@ -17,11 +17,13 @@ interface Props {
   onEdit: (id: number, body: string) => void
   onBest: (id: number) => void
   onCollapse: (id: number, collapsed: boolean) => void
+  mentionable?: UserBrief[]
   saving: boolean
 }
 
 export function PostCard({
-  post, best, canEdit, canModerate, quoteOn, onQuote, onEdit, onBest, onCollapse, saving,
+  post, best, canEdit, canModerate, quoteOn, onQuote, onEdit, onBest, onCollapse,
+  mentionable, saving,
 }: Props) {
   const body = useRef<HTMLDivElement>(null)
   const [editing, setEditing] = useState(false)
@@ -70,7 +72,7 @@ export function PostCard({
       {editing ? (
         <div className="post-body">
           <p className="muted">旧帖子没有 Markdown 原文，编辑会以新内容覆盖。</p>
-          <MarkdownEditor value={draft} onChange={setDraft} rows={8} />
+          <MarkdownEditor value={draft} onChange={setDraft} rows={8} mentionable={mentionable} />
           <p>
             <button type="button" disabled={saving || !draft.trim()}
                     onClick={() => { onEdit(post.id, draft); setEditing(false) }}>

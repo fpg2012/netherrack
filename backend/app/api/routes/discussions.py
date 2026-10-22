@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, OptionalUser, SessionDep, verify_csrf
 from app.core.ratelimit import limiter
-from app.models import Discussion, DiscussionEvent, DiscussionTag, Post, Tag
+from app.models import Discussion, DiscussionEvent, DiscussionTag, Post, Tag, User
 from app.schemas.common import Page
 from app.schemas.content import (
     DiscussionBrief,
@@ -14,10 +14,11 @@ from app.schemas.content import (
     EventOut,
     PostOut,
     TimelineItem,
+    UserBrief,
 )
 from app.schemas.write import EditDiscussion, NewDiscussion, NewPost
 from app.services.content import event_text, render_markdown
-from app.services.mentions import link_mentions, username_map
+from app.services.mentions import link_mentions, mentionable_users, username_map
 from app.services.notifications import (
     notify_best_answer,
     notify_mentions,
@@ -80,6 +81,18 @@ async def get_discussion(discussion_id: int, session: SessionDep,
         raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
     await session.refresh(discussion, ["tags"])
     return DiscussionDetail.model_validate(discussion)
+
+
+@router.get("/{discussion_id}/mentionable", response_model=list[UserBrief])
+async def mentionable(discussion_id: int, session: SessionDep,
+                      user: CurrentUser) -> list[UserBrief]:
+    """本贴可以 @ 的人：楼主、各楼层作者、管理员。"""
+    if await session.get(Discussion, discussion_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "讨论不存在")
+    names = await mentionable_users(session, discussion_id)
+    ids = {uid for uid, _ in names.values()}
+    rows = await session.scalars(select(User).where(User.id.in_(ids)).order_by(User.username))
+    return [UserBrief.model_validate(u) for u in rows]
 
 
 @router.get("/{discussion_id}/timeline", response_model=Page[TimelineItem])
@@ -229,7 +242,9 @@ async def reply(request: Request, discussion_id: int, payload: NewPost, session:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "引用的帖子不在该讨论中")
         body_md = build_quote(quoted) + "\n\n" + body_md
 
-    html, mentioned = link_mentions(render_markdown(body_md), await username_map(session))
+    # 回复里只能 @ 本贴参与者和管理员，其他人保持普通文本
+    html, mentioned = link_mentions(
+        render_markdown(body_md), await mentionable_users(session, discussion_id))
     post = Post(
         discussion_id=discussion_id, number=number, author_id=user.id,
         body_md=body_md, body_html=html, search_text=index_text(html),

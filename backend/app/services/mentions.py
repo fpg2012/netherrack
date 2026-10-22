@@ -67,3 +67,31 @@ async def username_map(session) -> dict[str, tuple[int, str]]:
         username: (user_id, nickname or username)
         for user_id, username, nickname in rows
     }
+
+
+async def mentionable_users(session, discussion_id: int) -> dict[str, tuple[int, str]]:
+    """本贴可 @ 的人：楼主 + 所有楼层作者 + 管理员。"""
+    from sqlalchemy import or_, select
+
+    from app.models import Discussion, Post
+
+    author_id = await session.scalar(
+        select(Discussion.author_id).where(Discussion.id == discussion_id)
+    )
+    participant_ids = set(
+        await session.scalars(
+            select(Post.author_id).where(
+                Post.discussion_id == discussion_id, Post.author_id.is_not(None)
+            )
+        )
+    )
+    if author_id is not None:
+        participant_ids.add(author_id)
+    admin_ids = set(await session.scalars(select(User.id).where(User.is_admin.is_(True))))
+
+    rows = await session.execute(
+        select(User.id, User.username, User.nickname).where(
+            or_(User.id.in_(participant_ids), User.id.in_(admin_ids))
+        )
+    )
+    return {(username): (uid, nick or username) for uid, username, nick in rows}

@@ -37,7 +37,9 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 ## 已实现（M1 + M2 写操作）
 
 - 浏览：讨论列表 / 标签筛选 / 帖子时间线 / 搜索 / 附件与 KaTeX
-- 输入 `@` 自动弹出用户候选（带头像，跟随光标，↑↓ 选择、Enter/Tab 插入）
+- 输入 `@` 自动弹出用户候选（带头像，跟随光标，↑↓ 选择并自动滚动、Enter/Tab 插入）；
+  回复/编辑时只能 @ 本帖的楼主、各楼层作者和管理员，其他人保持普通文本、不发通知
+  （新帖第一楼不受限）
 - 单独成段的 B 站 / YouTube 链接会自动变成播放器（新帖也支持）
 - 嵌入：旧帖里的 YouTube / Bilibili 视频（iframe 只允许这三个播放器域名，
   其余来源在清洗阶段丢弃；`make embeds` 可重新渲染被误删的历史嵌入）

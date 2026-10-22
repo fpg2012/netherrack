@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAllUsers, usePreview } from '../api/hooks'
+import type { UserBrief } from '../types'
 import { api } from '../api/client'
 import { Avatar } from './Avatar'
 import { setupFolding } from '../lib/fold'
@@ -11,6 +12,8 @@ interface Props {
   rows?: number
   placeholder?: string
   allowUpload?: boolean
+  /** 只允许 @ 这些人（讨论页传入：楼主 + 各楼层作者 + 管理员） */
+  mentionable?: UserBrief[]
 }
 
 /** 量出光标在 textarea 里的位置（用等宽镜像元素）。 */
@@ -54,12 +57,13 @@ interface UploadResult {
 }
 
 export function MarkdownEditor({
-  value, onChange, rows = 10, placeholder, allowUpload = true,
+  value, onChange, rows = 10, placeholder, allowUpload = true, mentionable,
 }: Props) {
   const preview = usePreview()
   const box = useRef<HTMLDivElement>(null)
   const area = useRef<HTMLTextAreaElement>(null)
   const picker = useRef<HTMLInputElement>(null)
+  const menu = useRef<HTMLUListElement>(null)
   const [showPreview, setShowPreview] = useState(false)
   const users = useAllUsers()
   const [mention, setMention] = useState<{ start: number; query: string } | null>(null)
@@ -68,6 +72,19 @@ export function MarkdownEditor({
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // 键盘上下移动时，让选中项保持在候选列表的可视范围内
+  useEffect(() => {
+    const list = menu.current
+    const item = list?.children[active] as HTMLElement | undefined
+    if (!list || !item) return
+    const top = item.offsetTop
+    const bottom = top + item.offsetHeight
+    if (top < list.scrollTop) list.scrollTop = top
+    else if (bottom > list.scrollTop + list.clientHeight) {
+      list.scrollTop = bottom - list.clientHeight
+    }
+  }, [active, mention])
+
   useEffect(() => {
     if (!showPreview || !preview.data) return
     renderMath(box.current)
@@ -75,7 +92,7 @@ export function MarkdownEditor({
   }, [showPreview, preview.data])
 
   const candidates = mention
-    ? (users.data?.items ?? [])
+    ? (mentionable ?? users.data?.items ?? [])
         .filter((u) => {
           const q = mention.query.toLowerCase()
           return u.username.toLowerCase().startsWith(q)
@@ -187,7 +204,7 @@ export function MarkdownEditor({
       ) : (
         <div className="editor-input">
           {mention && candidates.length > 0 && (
-            <ul className="mention-picker"
+            <ul className="mention-picker" ref={menu}
                 style={{ top: caret.top + 22, left: caret.left }}>
               {candidates.map((u, i) => (
                 <li key={u.id}>

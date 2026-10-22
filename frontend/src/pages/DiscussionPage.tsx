@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
-  useCollapsePost, useDiscussion, useEditDiscussion, useEditPost, useMe, useReply, useTags,
-  useTimeline,
+  useCollapsePost, useDiscussion, useEditDiscussion, useEditPost, useMe, useMentionable,
+  useReply, useTags, useTimeline,
 } from '../api/hooks'
 import { PostCard } from '../components/PostCard'
 import { Dropdown } from '../components/Dropdown'
@@ -24,6 +24,7 @@ export function DiscussionPage() {
   const editPost = useEditPost(discussionId)
   const editDiscussion = useEditDiscussion(discussionId)
   const collapsePost = useCollapsePost(discussionId)
+  const mentionable = useMentionable(discussionId)
 
   const [draft, setDraft] = useState('')
   const [quote, setQuote] = useState<Post | null>(null)
@@ -166,6 +167,7 @@ export function DiscussionPage() {
             onBest={(postId) => editDiscussion.mutate({ best_answer_post_id: postId })}
             onCollapse={(postId, collapsed) =>
               collapsePost.mutate({ id: postId, is_collapsed: collapsed })}
+            mentionable={mentionable.data}
             saving={editPost.isPending}
           />
         ) : null,
@@ -195,7 +197,9 @@ export function DiscussionPage() {
               </button>
             </p>
           )}
-          <MarkdownEditor value={draft} onChange={setDraft} rows={8} placeholder="支持 Markdown，$公式$ 会被 KaTeX 渲染" />
+          <MarkdownEditor value={draft} onChange={setDraft} rows={8}
+                          mentionable={mentionable.data}
+                          placeholder="支持 Markdown，$公式$ 会被 KaTeX 渲染" />
           <p>
             <button
               type="button"
