@@ -11,11 +11,11 @@ body {
   line-height: 1.65;
   font-family: -apple-system, "Segoe UI", "Noto Sans CJK SC", sans-serif;
 }
-.page { padding: 2rem 0 3rem; }
+.page { padding: 1.25rem 0 3rem; }
 @media (max-width: 640px) {
   h1 { font-size: 1.6em; }
   /* 窄屏贴边会显得局促，只在手机上留一点内边距 */
-  .page { padding: 1.25rem 1rem 2rem; }
+  .page { padding: 1rem 1rem 2rem; }
   .site-header { padding-left: 1rem; padding-right: 1rem; }
 }
 p { margin: 1em 0; }
@@ -31,7 +31,6 @@ h1 { margin-top: 0; font-size: 1.75em; line-height: 1.3; }
   align-items: center;
   gap: 1.4em;
   padding: .7em 0;
-  margin-bottom: 2em;
   border-bottom: 1px solid #e3e3e3;
 }
 .site-header .brand { display: flex; align-items: center; gap: .5em; text-decoration: none; }
