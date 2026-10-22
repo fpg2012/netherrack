@@ -5,6 +5,7 @@ from app.api.routes import (
     discussions,
     editor,
     meta,
+    notifications,
     posts,
     search,
     tags,
@@ -20,5 +21,6 @@ api.include_router(editor.router)
 api.include_router(tags.router)
 api.include_router(users.router)
 api.include_router(uploads.router)
+api.include_router(notifications.router)
 api.include_router(search.router)
 api.include_router(meta.router)

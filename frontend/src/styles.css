@@ -440,3 +440,43 @@ table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
 /* 编辑器工具栏 */
 .editor-tools { display: flex; align-items: center; gap: .8em; }
 .editor-tools .linklike { font-size: 100%; }
+
+/* 通知与用户主页 */
+.navlink { position: relative; }
+.navlink.active { color: #1a1a1a; border-bottom: 1px solid #1a1a1a; }
+.badge {
+  margin-left: .3em;
+  padding: 0 .35em;
+  border-radius: 99px;
+  background: #2e7d32;
+  color: #fff;
+  font-size: 70%;
+  font-family: Menlo, Consolas, monospace;
+}
+ul.notifications { list-style: none; padding: 0; }
+ul.notifications li {
+  padding: .55em .8em;
+  border: 1px solid #e0e0e0;
+  margin-bottom: .5em;
+}
+ul.notifications li.unread { border-left: 3px solid #2e7d32; }
+.notif-title { font-weight: bold; text-decoration: none; }
+.small { font-size: 85%; }
+
+.profile { display: flex; gap: 1em; align-items: center; margin-bottom: 1.2em; }
+.profile h1 { margin: 0 0 .2em; font-size: 1.4em; }
+.tabs { display: flex; gap: 1.2em; border-bottom: 1px solid #e3e3e3; }
+.tabs button {
+  border: 0; background: none; padding: .3em 0; cursor: pointer;
+  border-bottom: 2px solid transparent; border-radius: 0; font-size: 95%;
+}
+.tabs button.active { border-bottom-color: #1a1a1a; font-weight: bold; }
+ul.posts-list { list-style: none; padding: 0; }
+ul.posts-list li { margin: .9em 0; }
+ul.posts-list .snippet { color: #606060; font-size: 90%; }
+
+@media (prefers-color-scheme: dark) {
+  ul.notifications li { border-color: #333; }
+  .tabs { border-bottom-color: #333; }
+  .navlink.active { color: #d8d8d8; border-bottom-color: #d8d8d8; }
+}

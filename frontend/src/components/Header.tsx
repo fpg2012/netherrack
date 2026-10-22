@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
-import { useLogout, useMe } from '../api/hooks'
+import { useLogout, useMe, useUnreadCount } from '../api/hooks'
 import { Avatar } from './Avatar'
 
 export function Header() {
@@ -7,6 +7,7 @@ export function Header() {
   const navigate = useNavigate()
   const me = useMe()
   const logout = useLogout()
+  const unread = useUnreadCount()
 
   return (
     <header className="site-header">
@@ -17,7 +18,9 @@ export function Header() {
 
       <nav className="nav">
         <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>讨论</NavLink>
-        <NavLink to="/users" className={({ isActive }) => (isActive ? 'active' : '')}>用户</NavLink>
+        {me.data && (
+          <NavLink to="/users" className={({ isActive }) => (isActive ? 'active' : '')}>用户</NavLink>
+        )}
       </nav>
 
       <form
@@ -35,6 +38,9 @@ export function Header() {
       <div className="auth">
         {me.data ? (
           <>
+            <NavLink to="/notifications" className={({ isActive }) => (isActive ? 'active navlink' : 'navlink')}>
+              通知{unread.data?.count ? <span className="badge">{unread.data.count}</span> : null}
+            </NavLink>
             <Link className="button" to="/new">发帖</Link>
             <Avatar user={me.data} size={22} />
             <span className="who">{me.data.nickname ?? me.data.username}</span>

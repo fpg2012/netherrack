@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type {
-  DiscussionBrief, DiscussionDetail, Me, Page, Post, SearchHit, TagWithCount, TimelineItem,
-  UserListItem,
+  DiscussionBrief, DiscussionDetail, Me, Notification, Page, Post, SearchHit, TagWithCount,
+  TimelineItem, UserListItem, UserPost, UserProfile,
 } from '../types'
 
 export function useDiscussions(params: { page: number; tag?: string | null }) {
@@ -135,5 +135,53 @@ export function useLogout() {
       qc.removeQueries({ queryKey: ['me'] })
       qc.invalidateQueries()
     },
+  })
+}
+
+
+// ---------------------------------------------------------------- 通知与用户
+
+export function useNotifications(page: number) {
+  return useQuery({
+    queryKey: ['notifications', page],
+    queryFn: () => api.get<Page<Notification>>(`/notifications?page=${page}`),
+    placeholderData: (prev) => prev,
+  })
+}
+
+export function useUnreadCount() {
+  return useQuery({
+    queryKey: ['notifications', 'unread'],
+    queryFn: () => api.get<{ count: number }>('/notifications/unread'),
+    refetchInterval: 60_000,
+  })
+}
+
+export function useReadAll() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.post<{ updated: number }>('/notifications/read-all'),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  })
+}
+
+export function useUser(id: number) {
+  return useQuery({
+    queryKey: ['user', id],
+    queryFn: () => api.get<UserProfile>(`/users/${id}`),
+  })
+}
+
+export function useUserDiscussions(id: number, page: number) {
+  return useQuery({
+    queryKey: ['user', id, 'discussions', page],
+    queryFn: () => api.get<Page<DiscussionBrief>>(`/users/${id}/discussions?page=${page}`),
+  })
+}
+
+export function useUserPosts(id: number, page: number) {
+  return useQuery({
+    queryKey: ['user', id, 'posts', page],
+    queryFn: () => api.get<Page<UserPost>>(`/users/${id}/posts?page=${page}`),
   })
 }

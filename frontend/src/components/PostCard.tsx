@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Post } from '../types'
 import { renderMath } from '../lib/math'
 import { datetime, displayName } from '../lib/format'
+import { Link } from 'react-router-dom'
 import { MarkdownEditor } from './MarkdownEditor'
 import { Avatar } from './Avatar'
 
@@ -34,7 +35,10 @@ export function PostCard({
         <span className="floor">#{post.number}</span>
         <span className="avatar-slot"><Avatar user={post.author} /></span>
         <span className="who">
-          <span className="author">{displayName(post.author)}</span>
+          <span className="author">
+            {post.author ? <Link to={`/u/${post.author.id}`}>{displayName(post.author)}</Link>
+                         : displayName(post.author)}
+          </span>
           <span className="time">{datetime(post.created_at)}</span>
         </span>
         <span className="actions">

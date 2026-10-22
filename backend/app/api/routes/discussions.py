@@ -17,6 +17,7 @@ from app.schemas.content import (
 )
 from app.schemas.write import EditDiscussion, NewDiscussion, NewPost
 from app.services.content import event_text, render_markdown
+from app.services.notifications import notify_best_answer, notify_reply
 from app.services.quote import build_quote
 from app.services.search import index_text, segment
 from app.services.visibility import can_view, discussion_visible
@@ -210,6 +211,7 @@ async def reply(request: Request, discussion_id: int, payload: NewPost, session:
     )) + 1
 
     body_md = payload.body_md
+    quoted = None
     if payload.quote_post_id:
         quoted = await session.get(Post, payload.quote_post_id)
         if quoted is None or quoted.discussion_id != discussion_id:
@@ -225,6 +227,8 @@ async def reply(request: Request, discussion_id: int, payload: NewPost, session:
     session.add(post)
     discussion.post_count += 1
     discussion.last_posted_at = post.created_at
+    await session.flush()
+    await notify_reply(session, post=post, discussion=discussion, actor_id=user.id, quote=quoted)
     await session.commit()
     await session.refresh(post, ["author"])
     return PostOut.model_validate(post)
@@ -281,7 +285,9 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
         post = await session.get(Post, payload.best_answer_post_id)
         if post is None or post.discussion_id != discussion.id:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "最佳回复不属于该讨论")
-        discussion.best_answer_post_id = post.id
+        if discussion.best_answer_post_id != post.id:
+            discussion.best_answer_post_id = post.id
+            await notify_best_answer(session, post=post, actor_id=user.id)
 
     await session.commit()
     await session.refresh(discussion, ["tags", "author"])

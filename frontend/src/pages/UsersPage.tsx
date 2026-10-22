@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useUsers } from '../api/hooks'
 import { Avatar } from '../components/Avatar'
 import { date } from '../lib/format'
@@ -36,7 +37,7 @@ export function UsersPage() {
             <tr key={u.id}>
               <td className="user-cell">
                 <Avatar user={{ ...u, avatar_path: u.avatar_path }} size={22} />
-                <strong>{u.nickname || u.username}</strong>
+                <Link to={`/u/${u.id}`}><strong>{u.nickname || u.username}</strong></Link>
                 {u.nickname && <span className="muted"> @{u.username}</span>}
                 {u.is_admin && <span className="tag" style={{ '--tag': '#2e7d32' } as never}>管理</span>}
               </td>

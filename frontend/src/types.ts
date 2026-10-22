@@ -97,3 +97,28 @@ export interface UserListItem {
   posts: number
   discussions: number
 }
+
+export interface Notification {
+  id: number
+  kind: 'reply' | 'quote' | 'best_answer'
+  discussion_id: number
+  discussion_title: string
+  post_id: number
+  post_number: number | null
+  actor: UserBrief | null
+  read: boolean
+  created_at: string
+}
+
+export interface UserProfile extends UserListItem {
+  bio: string | null
+}
+
+export interface UserPost {
+  post_id: number
+  discussion_id: number
+  discussion_title: string
+  number: number
+  created_at: string
+  snippet: string
+}
