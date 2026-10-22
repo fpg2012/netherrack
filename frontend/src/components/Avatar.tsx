@@ -27,7 +27,10 @@ export function Avatar({ user, size = 26 }: Props) {
     )
   }
   return (
-    <span className="avatar avatar-fallback" style={{ width: size, height: size }}>
+    <span
+      className="avatar avatar-fallback"
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.45) }}
+    >
       {name.slice(0, 1).toUpperCase()}
     </span>
   )

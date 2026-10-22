@@ -426,7 +426,7 @@ table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
   justify-content: center;
   background: #ececec;
   color: #666;
-  font-size: 80%;
+  line-height: 1;
   flex: 0 0 auto;
   image-rendering: auto;
 }
@@ -441,42 +441,176 @@ table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
 .editor-tools { display: flex; align-items: center; gap: .8em; }
 .editor-tools .linklike { font-size: 100%; }
 
-/* 通知与用户主页 */
-.navlink { position: relative; }
-.navlink.active { color: #1a1a1a; border-bottom: 1px solid #1a1a1a; }
+/* 通知 */
 .badge {
-  margin-left: .3em;
+  margin-left: .25em;
   padding: 0 .35em;
   border-radius: 99px;
   background: #2e7d32;
   color: #fff;
   font-size: 70%;
   font-family: Menlo, Consolas, monospace;
+  vertical-align: .1em;
 }
-ul.notifications { list-style: none; padding: 0; }
-ul.notifications li {
-  padding: .55em .8em;
-  border: 1px solid #e0e0e0;
-  margin-bottom: .5em;
-}
-ul.notifications li.unread { border-left: 3px solid #2e7d32; }
+ul.notifications { list-style: none; padding: 0; margin: 0; }
+ul.notifications li { padding: .6em 0 .6em .8em; border-bottom: 1px solid #ededed; }
+ul.notifications li.unread { border-left: 2px solid #2e7d32; }
 .notif-title { font-weight: bold; text-decoration: none; }
+.notif-title:hover { text-decoration: underline; }
 .small { font-size: 85%; }
 
-.profile { display: flex; gap: 1em; align-items: center; margin-bottom: 1.2em; }
-.profile h1 { margin: 0 0 .2em; font-size: 1.4em; }
-.tabs { display: flex; gap: 1.2em; border-bottom: 1px solid #e3e3e3; }
-.tabs button {
-  border: 0; background: none; padding: .3em 0; cursor: pointer;
-  border-bottom: 2px solid transparent; border-radius: 0; font-size: 95%;
+/* 顶栏用户菜单 */
+.usermenu { position: relative; }
+.usermenu-trigger {
+  display: flex;
+  align-items: center;
+  gap: .45em;
+  padding: .1em .35em .1em .2em;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: none;
+  color: inherit;
+  font-size: 100%;
+  cursor: pointer;
 }
-.tabs button.active { border-bottom-color: #1a1a1a; font-weight: bold; }
-ul.posts-list { list-style: none; padding: 0; }
-ul.posts-list li { margin: .9em 0; }
-ul.posts-list .snippet { color: #606060; font-size: 90%; }
+.usermenu-trigger:hover, .usermenu-trigger[aria-expanded="true"] { border-color: #d5d5d5; }
+.usermenu-trigger .who { color: #333; }
+.usermenu-trigger .caret { color: #999; font-size: 70%; }
+.usermenu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + .35em);
+  min-width: 8.5em;
+  padding: .25em 0;
+  border: 1px solid #d5d5d5;
+  border-radius: 2px;
+  background: #fdfdfd;
+  z-index: 20;
+}
+.usermenu-list a, .usermenu-list button {
+  display: block;
+  width: 100%;
+  padding: .35em .8em;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-size: 90%;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.usermenu-list a:hover, .usermenu-list button:hover { background: #f0f0f0; }
+
+/* 用户主页 */
+.profile {
+  display: flex;
+  gap: 1.1em;
+  align-items: flex-start;
+  padding-bottom: 1.1em;
+  border-bottom: 1px solid #e3e3e3;
+}
+.profile .avatar { flex: 0 0 auto; border: 1px solid #d8d8d8; }
+.profile h1 { margin: 0 0 .4em; font-size: 1.5em; line-height: 1.2; }
+.profile .handle {
+  margin-left: .5em;
+  font-family: Menlo, Consolas, monospace;
+  font-size: .6em;
+  font-weight: normal;
+  color: #999;
+}
+.profile-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 85%;
+  color: #606060;
+}
+.profile-stats li + li::before {
+  content: "·";
+  margin: 0 .7em;
+  color: #c8c8c8;
+}
+.profile-stats b {
+  margin-right: .3em;
+  font-family: Menlo, Consolas, monospace;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.profile-bio { margin: .7em 0 0; font-size: 92%; }
+.tag.role { margin-left: .6em; border-color: #2e7d32; color: #2e7d32; vertical-align: .12em; }
+
+.tabs {
+  display: flex;
+  gap: 1.6em;
+  margin: 0 0 1.2em;
+  border-bottom: 1px solid #e3e3e3;
+}
+.tabs button {
+  padding: .6em 0 .45em;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: #666;
+  font-size: 90%;
+  cursor: pointer;
+}
+.tabs button:hover { color: #1a1a1a; }
+.tabs button.active { color: #1a1a1a; border-bottom-color: #1a1a1a; font-weight: bold; }
+.tabs .n {
+  margin-left: .35em;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 75%;
+  font-weight: normal;
+  color: #999;
+}
+.tabs button.active .n { color: #1a1a1a; }
+
+ul.posts-list { list-style: none; margin: 0; padding: 0; }
+ul.posts-list li { padding: .75em 0; border-bottom: 1px solid #ededed; }
+ul.posts-list li:last-child { border-bottom: 0; }
+.post-title { font-weight: bold; text-decoration: none; }
+.post-title:hover { text-decoration: underline; }
+.post-snippet {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: .25em 0 0;
+  color: #606060;
+  font-size: 88%;
+}
+.post-meta {
+  margin-top: .3em;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 72%;
+  color: #999;
+}
+
+@media (max-width: 640px) {
+  .profile { gap: .8em; }
+  .profile h1 { font-size: 1.25em; }
+  .profile-stats { gap: 0 .7em; }
+  .profile-stats li + li::before { content: none; }
+}
 
 @media (prefers-color-scheme: dark) {
-  ul.notifications li { border-color: #333; }
-  .tabs { border-bottom-color: #333; }
-  .navlink.active { color: #d8d8d8; border-bottom-color: #d8d8d8; }
+  ul.notifications li, ul.posts-list li { border-bottom-color: #2e2e2e; }
+  ul.notifications li.unread, .tabs button.active { border-bottom-color: #d8d8d8; }
+  .usermenu-trigger:hover, .usermenu-trigger[aria-expanded="true"] { border-color: #3a3a3a; }
+  .usermenu-trigger .who { color: #c8c8c8; }
+  .usermenu-list { background: #242424; border-color: #3a3a3a; }
+  .usermenu-list a:hover, .usermenu-list button:hover { background: #2f2f2f; }
+  .profile { border-bottom-color: #2e2e2e; }
+  .profile .avatar { border-color: #3a3a3a; }
+  .profile-stats { color: #a0a0a0; }
+  .profile-stats b, .tabs button.active .n { color: #d8d8d8; }
+  .tabs { border-bottom-color: #2e2e2e; }
+  .post-snippet { color: #a0a0a0; }
+  .post-meta { color: #7a7a7a; }
+  .tag.role { border-color: #66bb6a; color: #66bb6a; }
 }

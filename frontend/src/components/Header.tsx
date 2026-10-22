@@ -1,12 +1,11 @@
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
-import { useLogout, useMe, useUnreadCount } from '../api/hooks'
-import { Avatar } from './Avatar'
+import { useMe, useUnreadCount } from '../api/hooks'
+import { UserMenu } from './UserMenu'
 
 export function Header() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const me = useMe()
-  const logout = useLogout()
   const unread = useUnreadCount()
 
   return (
@@ -20,6 +19,11 @@ export function Header() {
         <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>讨论</NavLink>
         {me.data && (
           <NavLink to="/users" className={({ isActive }) => (isActive ? 'active' : '')}>用户</NavLink>
+        )}
+        {me.data && (
+          <NavLink to="/notifications" className={({ isActive }) => (isActive ? 'active' : '')}>
+            通知{unread.data?.count ? <span className="badge">{unread.data.count}</span> : null}
+          </NavLink>
         )}
       </nav>
 
@@ -38,16 +42,8 @@ export function Header() {
       <div className="auth">
         {me.data ? (
           <>
-            <NavLink to="/notifications" className={({ isActive }) => (isActive ? 'active navlink' : 'navlink')}>
-              通知{unread.data?.count ? <span className="badge">{unread.data.count}</span> : null}
-            </NavLink>
             <Link className="button" to="/new">发帖</Link>
-            <Avatar user={me.data} size={22} />
-            <span className="who">{me.data.nickname ?? me.data.username}</span>
-            <button type="button" className="linklike" disabled={logout.isPending}
-                    onClick={() => logout.mutate()}>
-              退出
-            </button>
+            <UserMenu />
           </>
         ) : (
           <Link className="button" to="/login">登录</Link>

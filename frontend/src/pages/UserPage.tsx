@@ -18,30 +18,39 @@ export function UserPage() {
   if (!me.data) return <p className="muted"><Link to="/login">登录</Link> 后查看用户资料。</p>
   if (profile.isLoading) return <p className="muted">加载中…</p>
   if (!profile.data) return <p>用户不存在。<Link to="/">返回</Link></p>
+
   const u = profile.data
   const current = tab === 'discussions' ? discussions.data : posts.data
 
   return (
     <>
-      <div className="profile">
-        <Avatar user={u} size={48} />
-        <div>
-          <h1>{u.nickname || u.username}</h1>
-          <p className="muted small">
-            {u.nickname && <>@{u.username} · </>}
-            注册于 {date(u.joined_at)} · {u.discussions} 个讨论 · {u.posts} 条回复
-            {u.is_admin && <span className="tag" style={{ '--tag': '#2e7d32' } as never}>管理</span>}
-          </p>
-          {u.bio && <p>{u.bio}</p>}
+      <header className="profile">
+        <Avatar user={u} size={64} />
+        <div className="profile-body">
+          <h1>
+            {u.nickname || u.username}
+            {u.nickname && <span className="handle">@{u.username}</span>}
+            {u.is_admin && <span className="tag role">管理</span>}
+          </h1>
+          <ul className="profile-stats">
+            <li><b>{u.discussions}</b>讨论</li>
+            <li><b>{u.posts}</b>回复</li>
+            <li>加入于 <time dateTime={u.joined_at}>{date(u.joined_at)}</time></li>
+          </ul>
+          {u.bio && <p className="profile-bio">{u.bio}</p>}
         </div>
-      </div>
+      </header>
 
-      <p className="tabs">
+      <div className="tabs">
         <button type="button" className={tab === 'discussions' ? 'active' : ''}
-                onClick={() => { setTab('discussions'); setPage(1) }}>讨论</button>
+                onClick={() => { setTab('discussions'); setPage(1) }}>
+          讨论<span className="n">{u.discussions}</span>
+        </button>
         <button type="button" className={tab === 'posts' ? 'active' : ''}
-                onClick={() => { setTab('posts'); setPage(1) }}>回复</button>
-      </p>
+                onClick={() => { setTab('posts'); setPage(1) }}>
+          回复<span className="n">{u.posts}</span>
+        </button>
+      </div>
 
       {tab === 'discussions' ? (
         <div className="grid">
@@ -51,22 +60,26 @@ export function UserPage() {
         <ul className="posts-list">
           {posts.data?.items.map((p) => (
             <li key={p.post_id}>
-              <Link to={`/d/${p.discussion_id}#p${p.post_id}`}>{p.discussion_title}</Link>
-              <div className="muted small">#{p.number} · {datetime(p.created_at)}</div>
-              <div className="snippet">{p.snippet}</div>
+              <Link className="post-title" to={`/d/${p.discussion_id}#p${p.post_id}`}>
+                {p.discussion_title}
+              </Link>
+              <p className="post-snippet">{p.snippet}</p>
+              <div className="post-meta">#{p.number} · {datetime(p.created_at)}</div>
             </li>
           ))}
         </ul>
       )}
-      {current?.total === 0 && <p className="muted">暂无内容。</p>}
+      {current?.total === 0 && <p className="muted">还没有内容。</p>}
 
-      <p className="pager">
-        {page > 1 && <a href="#" onClick={(e) => { e.preventDefault(); setPage(page - 1) }}>← 上一页</a>}
-        <span>{page} / {current?.pages ?? 1}</span>
-        {page < (current?.pages ?? 1) && (
-          <a href="#" onClick={(e) => { e.preventDefault(); setPage(page + 1) }}>下一页 →</a>
-        )}
-      </p>
+      {(current?.pages ?? 1) > 1 && (
+        <p className="pager">
+          {page > 1 && <a href="#" onClick={(e) => { e.preventDefault(); setPage(page - 1) }}>← 上一页</a>}
+          <span>{page} / {current?.pages ?? 1}</span>
+          {page < (current?.pages ?? 1) && (
+            <a href="#" onClick={(e) => { e.preventDefault(); setPage(page + 1) }}>下一页 →</a>
+          )}
+        </p>
+      )}
     </>
   )
 }
