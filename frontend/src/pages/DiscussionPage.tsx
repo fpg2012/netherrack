@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useDiscussion, useEditDiscussion, useEditPost, useMe, useReply, useTimeline } from '../api/hooks'
+import {
+  useDiscussion, useEditDiscussion, useEditPost, useMe, useReply, useTags, useTimeline,
+} from '../api/hooks'
 import { PostCard } from '../components/PostCard'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { datetime, displayName } from '../lib/format'
@@ -13,6 +15,7 @@ export function DiscussionPage() {
   const discussion = useDiscussion(discussionId)
   const timeline = useTimeline(discussionId, page)
   const me = useMe()
+  const allTags = useTags()
 
   const reply = useReply(discussionId)
   const editPost = useEditPost(discussionId)
@@ -20,7 +23,8 @@ export function DiscussionPage() {
 
   const [draft, setDraft] = useState('')
   const [quote, setQuote] = useState<Post | null>(null)
-  const [tagInput, setTagInput] = useState<string | null>(null)
+  const [tagEditor, setTagEditor] = useState(false)
+  const [picked, setPicked] = useState<string[]>([])
   const replyBox = useRef<HTMLTextAreaElement>(null)
 
   if (discussion.isLoading) return <p className="muted">加载中…</p>
@@ -49,33 +53,64 @@ export function DiscussionPage() {
         {d.is_locked && ' · 已锁定'}
       </p>
 
-      <p className="post-tags">
+      <div className="post-tags">
         {d.tags.map((t) => (
           <span key={t.id} className="tag" style={{ '--tag': t.color ?? '#999' } as never}>
             <Link to={`/?tag=${t.slug}`}>{t.name}</Link>
           </span>
         ))}
         {(isAdmin || isAuthor) && (
-          <button type="button" className="linklike"
-                  onClick={() => setTagInput(tagInput === null ? d.tags.map((t) => t.slug).join(', ') : null)}>
-            改标签
+          <button
+            type="button"
+            className="linklike"
+            onClick={() => {
+              setPicked(d.tags.map((t) => t.slug))
+              setTagEditor((v) => !v)
+            }}
+          >
+            {tagEditor ? '收起' : '改标签'}
           </button>
         )}
-      </p>
+      </div>
 
-      {tagInput !== null && (
-        <p>
-          <input className="inline" value={tagInput} onChange={(e) => setTagInput(e.target.value)}
-                 placeholder="逗号分隔的标签 slug" />
-          <button type="button" disabled={editDiscussion.isPending}
-                  onClick={() => {
-                    editDiscussion.mutate({
-                      tags: tagInput.split(',').map((s) => s.trim()).filter(Boolean),
-                    })
-                    setTagInput(null)
-                  }}>保存</button>
-          {editDiscussion.isError && <span className="event"> 保存失败</span>}
-        </p>
+      {tagEditor && (
+        <div className="tag-editor">
+          <div className="tag-options">
+            {allTags.data?.map((t) => {
+              const on = picked.includes(t.slug)
+              return (
+                <label key={t.id} className={on ? 'on' : ''}>
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    disabled={!on && picked.length >= 5}
+                    onChange={(e) => setPicked(e.target.checked
+                      ? [...picked, t.slug]
+                      : picked.filter((s) => s !== t.slug))}
+                  />
+                  <span className="tag" style={{ '--tag': t.color ?? '#999' } as never}>
+                    {t.name}
+                  </span>
+                </label>
+              )
+            })}
+          </div>
+          <div className="tag-editor-actions">
+            <span className="hint">{picked.length}/5</span>
+            <button
+              type="button"
+              disabled={editDiscussion.isPending}
+              onClick={() => editDiscussion.mutate(
+                { tags: picked },
+                { onSuccess: () => setTagEditor(false) },
+              )}
+            >
+              {editDiscussion.isPending ? '保存中…' : '保存'}
+            </button>
+            <button type="button" onClick={() => setTagEditor(false)}>取消</button>
+            {editDiscussion.isError && <span className="event"> 保存失败</span>}
+          </div>
+        </div>
       )}
 
       {isAdmin && (

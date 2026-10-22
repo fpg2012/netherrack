@@ -377,3 +377,38 @@ table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
   .inline-form input { background: #242424; border-color: #3a3a3a; }
   table.users td { border-bottom-color: #2c2c2c; }
 }
+
+/* 标签编辑器 */
+.post-tags { display: flex; flex-wrap: wrap; align-items: center; gap: .4em; }
+.tag-editor {
+  margin: .6em 0 1.2em;
+  padding: .6em .8em;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  background: #fafafa;
+}
+.tag-options { display: flex; flex-wrap: wrap; gap: .45em 1.1em; }
+.tag-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: .35em;
+  font-size: 85%;
+  cursor: pointer;
+  opacity: .75;
+}
+.tag-options label.on { opacity: 1; }
+.tag-options input { margin: 0; }
+.tag-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: .5em;
+  margin-top: .7em;
+  padding-top: .6em;
+  border-top: 1px solid #e6e6e6;
+}
+.tag-editor-actions .hint { margin-right: auto; color: #888; font-size: 80%; }
+
+@media (prefers-color-scheme: dark) {
+  .tag-editor { background: #202020; border-color: #3a3a3a; }
+  .tag-editor-actions { border-top-color: #333; }
+}

@@ -248,9 +248,10 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
         tags = await _tags_by_slug(session, payload.tags)
         old = {t.id for t in discussion.tags}
         new = {t.id for t in tags}
-        discussion.tags = tags
-        _record(session, discussion.id, user.id, "discussionTagged",
-                {"added": sorted(new - old), "removed": sorted(old - new)})
+        if old != new:
+            discussion.tags = tags
+            _record(session, discussion.id, user.id, "discussionTagged",
+                    {"added": sorted(new - old), "removed": sorted(old - new)})
 
     if payload.best_answer_post_id is not None:
         post = await session.get(Post, payload.best_answer_post_id)
