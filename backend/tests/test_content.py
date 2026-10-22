@@ -32,3 +32,14 @@ def test_plain_text_unescapes_entities() -> None:
     from app.services.content import plain_text
 
     assert plain_text("<p>a &amp; b&nbsp;c</p>") == "a & b c"
+
+
+def test_iframe_only_from_video_hosts() -> None:
+    from app.services.content import _safe_iframes
+
+    ok = '<div class="embed"><iframe src="https://www.youtube-nocookie.com/embed/x"></iframe></div>'
+    assert _safe_iframes(ok) == ok
+    evil = '<iframe src="https://evil.example/x"></iframe>'
+    assert _safe_iframes(evil) == ""
+    # 伪装成子域也不行
+    assert _safe_iframes('<iframe src="https://evil.example/?h=www.youtube.com"></iframe>') == ""

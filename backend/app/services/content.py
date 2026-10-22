@@ -5,6 +5,7 @@ s9e 的 HTML，直接入库，不再二次转换（避免信息丢失）。
 """
 import html
 import re
+from urllib.parse import urlsplit
 
 import nh3
 from markdown_it import MarkdownIt
@@ -19,12 +20,17 @@ ALLOWED_TAGS = {
     "a", "p", "br", "em", "strong", "del", "code", "pre", "blockquote",
     "ul", "ol", "li", "h1", "h2", "h3", "h4", "h5", "h6", "hr",
     "table", "thead", "tbody", "tr", "th", "td", "img", "span", "div", "sup", "sub",
+    "iframe",
 }
 ALLOWED_ATTRS = {
     "a": {"href", "target", "class"},
     "img": {"src", "alt", "loading", "class"},
     "span": {"class", "data-tex", "style"},
     "div": {"class", "style", "data-tex"},
+    "iframe": {
+        "src", "class", "title", "width", "height", "loading",
+        "allow", "allowfullscreen", "frameborder", "referrerpolicy",
+    },
     "code": {"class"},
     "pre": {"class"},
     "th": {"colspan", "rowspan"},
@@ -32,24 +38,41 @@ ALLOWED_ATTRS = {
 }
 
 
+# 只允许视频站的内嵌播放器，其余 <iframe> 一律丢掉
+EMBED_HOSTS = {"www.youtube-nocookie.com", "www.youtube.com", "player.bilibili.com"}
+_IFRAME = re.compile(r"<iframe\b[^>]*>.*?</iframe>", re.I | re.S)
+_IFRAME_SRC = re.compile(r'src="([^"]*)"')
+
+
+def _safe_iframes(markup: str) -> str:
+    def repl(match: re.Match[str]) -> str:
+        src = _IFRAME_SRC.search(match.group(0))
+        if src is None:
+            return ""
+        host = urlsplit(html.unescape(src.group(1))).hostname or ""
+        return match.group(0) if host in EMBED_HOSTS else ""
+
+    return _IFRAME.sub(repl, markup)
+
+
 def render_markdown(text: str) -> str:
-    return nh3.clean(
+    return _safe_iframes(nh3.clean(
         _md.render(text),
         tags=ALLOWED_TAGS,
         attributes=ALLOWED_ATTRS,
         link_rel="noopener noreferrer",
-    )
+    ))
 
 
 def render_legacy_s9e(xml: str, uploads: dict | None = None) -> str:
     from app.services.s9e import to_html
 
-    return nh3.clean(
+    return _safe_iframes(nh3.clean(
         to_html(xml, uploads),
         tags=ALLOWED_TAGS,
         attributes=ALLOWED_ATTRS,
         link_rel="noopener noreferrer",
-    )
+    ))
 
 
 EVENT_TEXT = {

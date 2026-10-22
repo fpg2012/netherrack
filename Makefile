@@ -29,6 +29,9 @@ import:
 reindex:       ## 重建搜索分词（改分词方式后跑一次）
 	cd backend && uv run python -m scripts.reindex_search
 
+embeds:        ## 重新渲染旧帖里的 YouTube / Bilibili 嵌入
+	cd backend && uv run python -m scripts.restore_embeds
+
 mentions:      ## 清理迁移数据里的 @"name"#p123，改成可点击的 @name
 	cd backend && uv run python -m scripts.fix_legacy_mentions
 

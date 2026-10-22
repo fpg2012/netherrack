@@ -37,6 +37,8 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 ## 已实现（M1 + M2 写操作）
 
 - 浏览：讨论列表 / 标签筛选 / 帖子时间线 / 搜索 / 附件与 KaTeX
+- 嵌入：旧帖里的 YouTube / Bilibili 视频（iframe 只允许这三个播放器域名，
+  其余来源在清洗阶段丢弃；`make embeds` 可重新渲染被误删的历史嵌入）
 - 折叠：超过 480px 的代码块、超过 560px 的高图默认收起，点下方按钮展开
 - 内容折叠（管理员）：可折叠整个讨论或单个楼层。折叠的讨论强制不公开、
   不出现在列表/搜索/标签计数里；折叠的楼层只下发空正文，前端显示「内容已被折叠」
