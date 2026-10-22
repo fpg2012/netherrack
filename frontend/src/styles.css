@@ -309,12 +309,14 @@ button:disabled { opacity: .5; cursor: default; }
 }
 .post-head .actions {
   margin-left: auto;
-  margin-right: -.4em;    /* 抵消按钮内边距，文字右缘与正文对齐 */
+  padding-right: .9em;    /* 与正文右边距一致，避免按钮压到边框外 */
   align-self: center;
   display: flex;
   align-items: center;
   gap: .1em;
 }
+/* 最后一个按钮抵消自身右内边距，文字右缘正好落在正文右边缘 */
+.post-head .actions > *:last-child { margin-right: -.4em; }
 .post-head .actions button {
   border: 0;
   background: none;
