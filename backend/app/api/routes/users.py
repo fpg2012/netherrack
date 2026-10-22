@@ -6,6 +6,7 @@ from app.models import Discussion, Post, User
 from app.schemas.common import Page
 from app.schemas.content import DiscussionBrief
 from app.schemas.user import UserListItem, UserPostItem, UserProfile
+from app.services.content import plain_text
 from app.services.visibility import discussion_visible
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -130,7 +131,7 @@ async def user_posts(
         UserPostItem(
             post_id=p.id, discussion_id=p.discussion_id, discussion_title=title,
             number=p.number, created_at=p.created_at,
-            snippet=(p.search_text or "")[:160],
+            snippet=plain_text(p.body_html)[:160],
         )
         for p, title in rows
     ]

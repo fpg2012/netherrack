@@ -3,6 +3,9 @@
 新帖子存 Markdown，渲染成 HTML 后用 nh3 清洗；从 Flarum 迁移过来的正文已经是
 s9e 的 HTML，直接入库，不再二次转换（避免信息丢失）。
 """
+import html
+import re
+
 import nh3
 from markdown_it import MarkdownIt
 
@@ -84,3 +87,15 @@ def event_text(kind: str, payload: object, who: str, tag_names: dict[int, str]) 
     if kind == "recipientLeft":
         return f"{who} 退出了该讨论"
     return f"{who} {kind}"
+
+
+_BLOCK = re.compile(
+    r"</?(p|div|br|li|ul|ol|pre|blockquote|h[1-6]|tr|td|th|table)[^>]*>", re.I
+)
+
+
+def plain_text(markup: str) -> str:
+    """把正文 HTML 压成一行纯文本，用于列表摘要（不做分词）。"""
+    text = _BLOCK.sub(" ", markup)
+    text = re.sub(r"<[^>]+>", "", text)
+    return re.sub(r"\s+", " ", html.unescape(text)).strip()

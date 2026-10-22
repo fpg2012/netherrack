@@ -19,3 +19,16 @@ def test_markdown_sanitized() -> None:
     html = render_markdown("# hi\n\n<script>alert(1)</script>")
     assert "<h1>hi</h1>" in html
     assert "<script" not in html
+
+
+def test_plain_text_strips_tags_and_keeps_chinese() -> None:
+    from app.services.content import plain_text
+
+    html = '<p>中文<strong>加粗</strong>混排</p><p>第二段</p>'
+    assert plain_text(html) == "中文加粗混排 第二段"
+
+
+def test_plain_text_unescapes_entities() -> None:
+    from app.services.content import plain_text
+
+    assert plain_text("<p>a &amp; b&nbsp;c</p>") == "a & b c"

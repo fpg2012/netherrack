@@ -601,6 +601,10 @@ ul.posts-list li:last-child { border-bottom: 0; }
 @media (prefers-color-scheme: dark) {
   ul.notifications li, ul.posts-list li { border-bottom-color: #2e2e2e; }
   ul.notifications li.unread, .tabs button.active { border-bottom-color: #d8d8d8; }
+  .tabs button { color: #9a9a9a; }
+  .tabs button:hover { color: #d8d8d8; }
+  .tabs button.active { color: #d8d8d8; }
+  .tabs .n { color: #7a7a7a; }
   .usermenu-trigger:hover, .usermenu-trigger[aria-expanded="true"] { border-color: #3a3a3a; }
   .usermenu-trigger .who { color: #c8c8c8; }
   .usermenu-list { background: #242424; border-color: #3a3a3a; }
