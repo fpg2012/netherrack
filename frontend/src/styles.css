@@ -1,17 +1,19 @@
+*, *::before, *::after { box-sizing: border-box; }
+
 html {
   color: #1a1a1a;
   background-color: #fdfdfd;
 }
 body {
   margin: 0 auto;
-  max-width: 50em;
-  padding: 50px;
+  max-width: 48rem;              /* 含左右内边距的总宽度 */
+  padding: 2rem 1.5rem 3rem;
   line-height: 1.65;
   font-family: -apple-system, "Segoe UI", "Noto Sans CJK SC", sans-serif;
 }
-@media (max-width: 600px) {
-  body { padding: 12px; }
-  h1 { font-size: 1.8em; }
+@media (max-width: 640px) {
+  body { padding: 1.25rem 1rem 2rem; }
+  h1 { font-size: 1.6em; }
 }
 p { margin: 1em 0; }
 a, a:visited { color: inherit; }
