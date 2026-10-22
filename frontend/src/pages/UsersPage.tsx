@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useUsers } from '../api/hooks'
+import { useMe, useUsers } from '../api/hooks'
 import { Avatar } from '../components/Avatar'
 import { date } from '../lib/format'
 
@@ -8,7 +8,12 @@ export function UsersPage() {
   const [page, setPage] = useState(1)
   const [input, setInput] = useState('')
   const [query, setQuery] = useState('')
+  const me = useMe()
   const users = useUsers(page, query)
+
+  if (!me.data) {
+    return <p className="muted"><Link to="/login">登录</Link> 后才能查看用户列表。</p>
+  }
 
   return (
     <>
