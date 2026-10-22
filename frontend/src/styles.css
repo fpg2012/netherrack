@@ -6,14 +6,17 @@ html {
 }
 body {
   margin: 0 auto;
-  max-width: 48rem;              /* 含左右内边距的总宽度 */
-  padding: 2rem 1.5rem 3rem;
+  max-width: 48rem;
+  padding: 0;
   line-height: 1.65;
   font-family: -apple-system, "Segoe UI", "Noto Sans CJK SC", sans-serif;
 }
+.page { padding: 2rem 0 3rem; }
 @media (max-width: 640px) {
-  body { padding: 1.25rem 1rem 2rem; }
   h1 { font-size: 1.6em; }
+  /* 窄屏贴边会显得局促，只在手机上留一点内边距 */
+  .page { padding: 1.25rem 1rem 2rem; }
+  .site-header { padding-left: 1rem; padding-right: 1rem; }
 }
 p { margin: 1em 0; }
 a, a:visited { color: inherit; }
