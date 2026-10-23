@@ -51,7 +51,8 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 - 用户列表：`/users`，按用户名筛选，显示注册时间、发帖数、讨论数
 - 用户主页：`/u/:id`，资料 + 讨论/回复两个标签页
 - 通知：回复、引用、最佳回复会通知对方；`/notifications` 可全部标为已读，
-  顶栏「通知」显示未读数（60 秒轮询）
+  顶栏「通知」显示未读数；有新通知时通过 SSE（`GET /api/v1/stream`）即时推送，
+  轮询只做兜底（2 分钟一次）
 - @ 提及：正文里的 `@用户名` 渲染成指向个人主页的链接（按真实用户名匹配，
   不会误伤邮箱），被提及会收到「在帖子里提到了你」通知；迁移数据里的
   `@"name"#p123` 用 `make mentions` 清理成 `@name`
@@ -129,3 +130,5 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 5. **接口文档默认关闭**：`DEBUG=false` 时 `/api/docs` 和 `/api/openapi.json` 返回 404，
    需要时用 `DEBUG=true` 打开
 6. 多 worker 时把 `app/core/ratelimit.py` 的存储换成 Redis，否则每个进程各算一份
+7. SSE 是进程内事件总线，`/api/v1/stream` 只认识当前 worker 上的连接；
+   多 worker 要跨进程广播得接 Postgres `LISTEN/NOTIFY` 或 Redis pub/sub

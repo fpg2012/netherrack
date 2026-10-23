@@ -8,6 +8,7 @@ from app.api.routes import (
     notifications,
     posts,
     search,
+    stream,
     tags,
     uploads,
     users,
@@ -22,5 +23,6 @@ api.include_router(tags.router)
 api.include_router(users.router)
 api.include_router(uploads.router)
 api.include_router(notifications.router)
+api.include_router(stream.router)
 api.include_router(search.router)
 api.include_router(meta.router)

@@ -9,6 +9,7 @@ from app.models import Discussion, Notification, Post, User
 from app.schemas.common import Page
 from app.schemas.content import UserBrief
 from app.schemas.notification import NoticeIn, NotificationOut
+from app.services.events import mark_notified
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -109,5 +110,6 @@ async def broadcast(request: Request, payload: NoticeIn, session: SessionDep,
             recipient_id=recipient_id, actor_id=user.id, kind="system",
             title=title, body=body,
         ))
+    mark_notified(session, recipients)
     await session.commit()
     return {"sent": len(recipients)}

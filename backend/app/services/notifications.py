@@ -2,6 +2,7 @@
 from sqlalchemy.dialects.postgresql import insert
 
 from app.models import Discussion, Notification, Post
+from app.services.events import mark_notified
 
 
 async def notify(session, *, recipient_id: int | None, actor_id: int, kind: str,
@@ -17,6 +18,7 @@ async def notify(session, *, recipient_id: int | None, actor_id: int, kind: str,
         .on_conflict_do_nothing(constraint="uq_notification")
     )
     await session.execute(stmt)
+    mark_notified(session, [recipient_id])
 
 
 async def notify_reply(session, *, post: Post, discussion: Discussion, actor_id: int,

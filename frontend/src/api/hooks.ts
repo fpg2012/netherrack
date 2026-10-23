@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type {
@@ -179,8 +180,22 @@ export function useUnreadCount() {
   return useQuery({
     queryKey: ['notifications', 'unread'],
     queryFn: () => api.get<{ count: number }>('/notifications/unread'),
-    refetchInterval: 60_000,
+    // SSE 是主要通道，这里只做兜底（SSE 断线时最长 2 分钟也能同步）
+    refetchInterval: 120_000,
   })
+}
+
+/** 订阅 SSE：有新通知时让未读数和列表失效。 */
+export function useNotificationStream(enabled: boolean) {
+  const qc = useQueryClient()
+  useEffect(() => {
+    if (!enabled) return
+    const source = new EventSource('/api/v1/stream')
+    source.addEventListener('notify', () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] })
+    })
+    return () => source.close()
+  }, [enabled, qc])
 }
 
 export function useBroadcast() {

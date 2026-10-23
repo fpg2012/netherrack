@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
-import { useMe, useUnreadCount } from '../api/hooks'
+import { useMe, useNotificationStream, useUnreadCount } from '../api/hooks'
 import { UserMenu } from './UserMenu'
 
 export function Header() {
@@ -7,6 +7,7 @@ export function Header() {
   const navigate = useNavigate()
   const me = useMe()
   const unread = useUnreadCount()
+  useNotificationStream(!!me.data)
 
   return (
     <header className={me.data ? 'site-header' : 'site-header guest'}>
