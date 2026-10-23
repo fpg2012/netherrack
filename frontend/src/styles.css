@@ -363,30 +363,24 @@ a.mention:hover { text-decoration: underline; }
 @media (prefers-color-scheme: dark) {
   html {
     color: #d8d8d8;
-    background-color: #171717;
-    background-image: url('/netherrack-tile.svg'), linear-gradient(180deg, #1c1c1c 0%, #191919 50%, #161616 100%);
-    background-repeat: repeat, no-repeat;
-    background-size: 32px 32px, cover;
-    background-attachment: fixed, fixed;
+    background: linear-gradient(180deg, #1c1c1c 0%, #191919 50%, #161616 100%) fixed;
   }
   .card-meta, .card-snippet, .muted, small, blockquote, .pager { color: #a0a0a0; }
   .tagbar a {
-    border-color: oklch(from var(--tag, #999) 0.56 calc(c * 1.35) h);
-    background: oklch(from var(--tag, #999) 0.56 calc(c * 1.35) h);
-    color: #fff;
+    border-color: color-mix(in srgb, var(--tag, #999) 45%, transparent);
+    background: color-mix(in srgb, var(--tag, #999) 16%, transparent);
+    color: color-mix(in srgb, var(--tag, #999) 35%, #e8e8e8);
   }
-  .tagbar a:hover {
-    background: oklch(from var(--tag, #999) 0.5 calc(c * 1.35) h);
-    border-color: oklch(from var(--tag, #999) 0.5 calc(c * 1.35) h);
-  }
+  .tagbar a:hover { color: #f0f0f0; }
   .tagbar a.active {
-    background: oklch(from var(--tag, #999) 0.44 calc(c * 1.35) h);
-    border-color: oklch(from var(--tag, #999) 0.44 calc(c * 1.35) h);
+    border-color: var(--tag, #999);
+    background: color-mix(in srgb, var(--tag, #999) 26%, transparent);
+    color: #f0f0f0;
   }
   .tag {
-    border-color: oklch(from var(--tag, #999) 0.56 calc(c * 1.35) h);
-    background: oklch(from var(--tag, #999) 0.56 calc(c * 1.35) h);
-    color: #fff;
+    border-color: color-mix(in srgb, var(--tag, #999) 55%, transparent);
+    background: color-mix(in srgb, var(--tag, #999) 30%, transparent);
+    color: color-mix(in srgb, var(--tag, #999) 38%, #e8e8e8);
   }
   .card { background-color: rgba(230, 160, 60, calc(var(--heat, 0) * .10)); }
   .card:hover { background-color: rgba(230, 160, 60, calc(var(--heat, 0) * .10 + .03)); }
@@ -881,7 +875,7 @@ ul.posts-list li:last-child { border-bottom: 0; }
   .tabs { border-bottom-color: #2e2e2e; }
   .post-snippet { color: #a0a0a0; }
   .post-meta { color: #7a7a7a; }
-  .tag.role { border-color: #3f7a43; background: #3f7a43; color: #fff; }
+  .tag.role { border-color: #66bb6a; background: transparent; color: #66bb6a; }
 }
 
 /* 设置页 */
