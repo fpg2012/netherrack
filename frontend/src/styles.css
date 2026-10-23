@@ -6,7 +6,6 @@
   --line-strong: #b9b9b9;
   --card-line: #dedede;
   --card-line-hover: #bfbfbf;
-  --card-hover-bg: #fcfcfc;
   --title: #3d3d3d;
 }
 @media (prefers-color-scheme: dark) {
@@ -15,7 +14,6 @@
     --line-strong: #4d4d4d;
     --card-line: #333333;
     --card-line-hover: #4d4d4d;
-    --card-hover-bg: #202020;
     --title: #dcdcdc;
   }
 }
@@ -28,8 +26,10 @@
 }
 
 html {
+  min-height: 100%;
   color: #1a1a1a;
-  background-color: #fdfdfd;
+  /* 浅色模式不用纯白，给一点从上到下渐深的暖灰 */
+  background: linear-gradient(180deg, #fcfbf8 0%, #f7f6f2 45%, #f2f1ec 100%) fixed;
 }
 body {
   margin: 0 auto;
@@ -172,14 +172,14 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   display: block;
   padding: .8em .9em;
   border: 1px solid var(--card-line);
-  /* 回复数越多，底色越深（--heat 由卡片内联给出，0~1） */
-  background-color: rgba(176, 116, 40, calc(var(--heat, 0) * .10));
+  /* 固定色相 + 回复数决定深浅；饱和度压低，避免整页五颜六色 */
+  background-color: hsl(var(--card-hue, 40) 14% calc(97.2% - var(--heat, 0) * 3%));
   text-decoration: none;
   transition: background-color .15s, border-color .15s;
 }
 .card:hover {
   border-color: var(--card-line-hover);
-  background-color: rgba(176, 116, 40, calc(var(--heat, 0) * .10 + .02));
+  background-color: hsl(var(--card-hue, 40) 14% calc(95.6% - var(--heat, 0) * 3%));
 }
 .card-title { font-weight: bold; color: var(--title); text-decoration: none; }
 .card-title:hover { text-decoration: underline; }
@@ -319,7 +319,10 @@ a.mention:hover { text-decoration: underline; }
 .pager a { margin: 0 .3em; }
 
 @media (prefers-color-scheme: dark) {
-  html { color: #d8d8d8; background-color: #1a1a1a; }
+  html {
+    color: #d8d8d8;
+    background: linear-gradient(180deg, #1c1c1c 0%, #191919 50%, #161616 100%) fixed;
+  }
   .card-meta, .card-snippet, .muted, small, blockquote, .pager { color: #a0a0a0; }
   .tagbar a {
     border-color: color-mix(in srgb, var(--tag, #999) 45%, transparent);
@@ -337,8 +340,8 @@ a.mention:hover { text-decoration: underline; }
     background: color-mix(in srgb, var(--tag, #999) 30%, transparent);
     color: color-mix(in srgb, var(--tag, #999) 38%, #e8e8e8);
   }
-  .card { background-color: rgba(230, 160, 60, calc(var(--heat, 0) * .10)); }
-  .card:hover { background-color: rgba(230, 160, 60, calc(var(--heat, 0) * .10 + .03)); }
+  .card { background-color: hsl(var(--card-hue, 40) 9% calc(14.2% + var(--heat, 0) * 3%)); }
+  .card:hover { background-color: hsl(var(--card-hue, 40) 9% calc(15.8% + var(--heat, 0) * 3%)); }
   .post-head { background: #242424; border-bottom-color: #3a3a3a; }
   .post-head .floor { border-right-color: #3a3a3a; color: #a0a0a0; }
   .post-head .time { color: #a0a0a0; }
