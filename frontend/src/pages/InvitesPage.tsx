@@ -5,11 +5,11 @@ import { toast } from '../components/Toast'
 import { datetime } from '../lib/format'
 import type { Invite, InviteCreated } from '../types'
 
-const STATUS: Record<Invite['status'], { label: string; cls: string }> = {
-  active: { label: '可用', cls: 'status-active' },
-  used: { label: '已使用', cls: 'status-muted' },
-  expired: { label: '已过期', cls: 'status-muted' },
-  revoked: { label: '已撤销', cls: 'status-void' },
+const STATUS: Record<Invite['status'], string> = {
+  active: '可用',
+  used: '已使用',
+  expired: '已过期',
+  revoked: '已撤销',
 }
 
 export function InvitesPage() {
@@ -113,12 +113,11 @@ export function InvitesPage() {
           </thead>
           <tbody>
             {rows.map((invite) => {
-              const status = STATUS[invite.status]
               return (
                 <tr key={invite.id}>
                   <td><code>••••-{invite.hint}</code></td>
                   <td className="muted">{invite.note || '—'}</td>
-                  <td><span className={`status ${status.cls}`}>{status.label}</span></td>
+                  <td>{STATUS[invite.status]}</td>
                   <td className="muted nowrap">{datetime(invite.created_at)}</td>
                   <td className="muted nowrap">
                     {invite.expires_at ? datetime(invite.expires_at) : '长期'}

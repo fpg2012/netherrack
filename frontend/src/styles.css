@@ -1093,6 +1093,43 @@ pre.is-folded {
   padding: .9em 1em;
   border: 1px solid var(--line);
 }
+.invite-panel form {
+  display: flex;
+  align-items: stretch;
+  gap: .5em;
+  flex-wrap: wrap;
+}
+.invite-panel input,
+.invite-panel select,
+.invite-panel button {
+  box-sizing: border-box;
+  height: 2.3em;
+  padding: 0 .7em;
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: 90%;
+}
+.invite-panel input { flex: 1 1 14em; min-width: 0; }
+.invite-panel input::placeholder { color: #999; }
+.invite-panel select {
+  appearance: none;
+  padding-right: 2em;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .7em center;
+}
+.invite-panel button {
+  cursor: pointer;
+  background: #f4f4f4;
+}
+.invite-panel button:hover:not(:disabled) { background: #eaeaea; }
+.invite-panel button:disabled { cursor: default; color: #999; }
+.invite-panel input:focus,
+.invite-panel select:focus { outline: none; border-color: #999; }
+
 .invite-panel h2,
 .invite-created h2 {
   margin: 0 0 .6em;
@@ -1134,17 +1171,6 @@ pre.is-folded {
 }
 .invite-list-head .muted { font-size: 85%; }
 
-.status {
-  font-family: Menlo, Consolas, monospace;
-  font-size: 72%;
-  padding: 0 .4em;
-  border: 1px solid var(--line-strong);
-  white-space: nowrap;
-}
-.status-active { border-color: #1a1a1a; font-weight: bold; }
-.status-muted { color: #808080; }
-.status-void { color: #999; text-decoration: line-through; }
-
 button.linkish {
   padding: 0;
   border: 0;
@@ -1159,8 +1185,15 @@ button.linkish:hover { color: inherit; }
 
 @media (prefers-color-scheme: dark) {
   .tbl tbody tr:hover { background: rgba(255, 255, 255, .03); }
-  .status-active { border-color: #d8d8d8; }
   .tbl th, .invite-panel h2, .invite-created h2 { color: #a0a0a0; }
   .invite-panel { border-color: #3a3a3a; }
   .invite-created { border-color: #4d4d4d; }
+  .invite-panel input,
+  .invite-panel select,
+  .invite-panel button { background-color: #242424; border-color: #3a3a3a; }
+  .invite-panel select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a0a0a0' stroke-width='1.2'/%3E%3C/svg%3E");
+  }
+  .invite-panel button { background-color: #2a2a2a; }
+  .invite-panel button:hover:not(:disabled) { background-color: #333; }
 }
