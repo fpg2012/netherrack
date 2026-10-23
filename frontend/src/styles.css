@@ -212,14 +212,15 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   display: block;
   padding: .8em .9em;
   border: 1px solid var(--card-line);
-  /* 回复数越多底色略深，统一用同一种暖灰，不做随机色相 */
+  /* 用首个标签的色相给卡片上色；回复数越多颜色越深 */
   background-color: rgba(176, 116, 40, calc(var(--heat, 0) * .13));
+  background-color: oklch(from var(--card-tag, #b07428) calc(0.86 - var(--heat, 0) * .10) calc(c * 1.2) h);
   text-decoration: none;
   transition: background-color .15s, border-color .15s;
 }
 .card:hover {
   border-color: var(--card-line-hover);
-  background-color: rgba(176, 116, 40, calc(var(--heat, 0) * .13 + .025));
+  background-color: oklch(from var(--card-tag, #b07428) calc(0.82 - var(--heat, 0) * .10) calc(c * 1.2) h);
 }
 .card-title { font-weight: bold; color: var(--title); text-decoration: none; }
 .card-title:hover { text-decoration: underline; }

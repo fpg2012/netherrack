@@ -7,8 +7,15 @@ export function DiscussionCard({ d }: { d: DiscussionBrief }) {
   // 只用回复数控制深浅（对数压缩，避免热帖一下子变黑）
   const replies = Math.max(0, d.post_count - 1)
   const heat = Math.min(1, Math.log1p(replies) / Math.log1p(60))
+  const tint = d.tags[0]?.color
   return (
-    <div className="card" style={{ '--heat': heat.toFixed(3) } as CSSProperties}>
+    <div
+      className="card"
+      style={{
+        '--heat': heat.toFixed(3),
+        ...(tint ? { '--card-tag': tint } : {}),
+      } as CSSProperties}
+    >
       <Link className="card-title" to={`/d/${d.id}`}>{d.title}</Link>
       <div className="card-meta">{date(d.last_posted_at)} · {d.post_count} 回复</div>
       {d.tags.length > 0 && (
