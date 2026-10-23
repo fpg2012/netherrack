@@ -7,6 +7,7 @@ export function UserMenu() {
   const me = useMe()
   const logout = useLogout()
   const [open, setOpen] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const box = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -24,6 +25,13 @@ export function UserMenu() {
       document.removeEventListener('keydown', onKey)
     }
   }, [open])
+
+  // 点了「退出登录」后 4 秒内没有再次确认就恢复，避免误触
+  useEffect(() => {
+    if (!confirming) return
+    const timer = window.setTimeout(() => setConfirming(false), 4000)
+    return () => window.clearTimeout(timer)
+  }, [confirming])
 
   if (!me.data) return null
   const name = me.data.nickname ?? me.data.username
@@ -60,16 +68,25 @@ export function UserMenu() {
               </Link>
             </>
           )}
+
+          <div className="usermenu-sep" role="separator" />
+
           <button
             type="button"
             role="menuitem"
+            className={confirming ? 'usermenu-logout confirm' : 'usermenu-logout'}
             disabled={logout.isPending}
             onClick={() => {
+              if (!confirming) {
+                setConfirming(true)
+                return
+              }
               setOpen(false)
+              setConfirming(false)
               logout.mutate()
             }}
           >
-            退出登录
+            {confirming ? '再点一次确认退出' : '退出登录'}
           </button>
         </div>
       )}

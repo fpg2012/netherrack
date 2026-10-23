@@ -7,9 +7,10 @@ import type {
   TimelineItem, UserBrief, UserListItem, UserPost, UserProfile,
 } from '../types'
 
-export function useDiscussions(params: { page: number; tag?: string | null }) {
+export function useDiscussions(params: { page: number; tag?: string | null; untagged?: boolean }) {
   const search = new URLSearchParams({ page: String(params.page) })
-  if (params.tag) search.set('tag', params.tag)
+  if (params.untagged) search.set('untagged', '1')
+  else if (params.tag) search.set('tag', params.tag)
   return useQuery({
     queryKey: ['discussions', params],
     queryFn: () => api.get<Page<DiscussionBrief>>(`/discussions?${search}`),
@@ -48,7 +49,9 @@ export function useSearch(q: string, page: number) {
 export function useMeta() {
   return useQuery({
     queryKey: ['meta'],
-    queryFn: () => api.get<{ discussions: number; posts: number; users: number; timezone: string }>('/meta'),
+    queryFn: () => api.get<{
+      discussions: number; posts: number; users: number; untagged: number; timezone: string
+    }>('/meta'),
     staleTime: 5 * 60_000,
   })
 }

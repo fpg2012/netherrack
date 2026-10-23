@@ -40,12 +40,15 @@ async def list_discussions(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     tag: str | None = None,
+    untagged: bool = False,
     q: str | None = None,
 ) -> Page[DiscussionBrief]:
     # 折叠的讨论不进列表（对所有人）
     stmt = select(Discussion).where(discussion_visible(user),
                                     Discussion.is_collapsed.is_(False))
-    if tag:
+    if untagged:
+        stmt = stmt.where(~Discussion.tags.any())
+    elif tag:
         stmt = stmt.where(
             Discussion.id.in_(
                 select(DiscussionTag.discussion_id)

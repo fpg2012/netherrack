@@ -284,11 +284,7 @@ export function DiscussionPage() {
       </div>
 
       <aside className="sidebar">
-        <Sidebar
-          tags={allTags.data ?? []}
-          total={meta.data?.discussions ?? 0}
-          meta={meta.data}
-        />
+        <Sidebar tags={allTags.data ?? []} meta={meta.data} />
       </aside>
     </div>
   )

@@ -7,11 +7,12 @@ import { TagBar } from '../components/TagBar'
 export function IndexPage() {
   const [params, setParams] = useSearchParams()
   const tag = params.get('tag')
+  const untagged = params.get('untagged') === '1'
   const page = Math.max(1, Number(params.get('page') ?? 1))
-  const discussions = useDiscussions({ page, tag })
+  const discussions = useDiscussions({ page, tag, untagged })
   const tags = useTags()
   const meta = useMeta()
-  const tagName = tags.data?.find((t) => t.slug === tag)?.name
+  const tagName = untagged ? null : tags.data?.find((t) => t.slug === tag)?.name
   const loading = discussions.isPending
 
   const go = (next: number) => {
@@ -24,15 +25,16 @@ export function IndexPage() {
     <>
       <div className="index-layout">
         <div className="index-main">
-          <h1>{tagName ?? '全部讨论'}</h1>
+          <h1>{untagged ? '无标签' : tagName ?? '全部讨论'}</h1>
           <p className="muted">
             {loading ? '加载中…' : `共 ${discussions.data?.total ?? 0} 个讨论`}
           </p>
 
           <TagBar
             tags={tags.data ?? []}
-            total={meta.data?.discussions ?? 0}
+            untagged={meta.data?.untagged ?? 0}
             active={tag}
+            untaggedActive={untagged}
           />
 
           <div className="grid">
@@ -58,8 +60,8 @@ export function IndexPage() {
         <aside className="sidebar">
           <Sidebar
             tags={tags.data ?? []}
-            total={meta.data?.discussions ?? 0}
             active={tag}
+            untaggedActive={untagged}
             meta={meta.data}
           />
         </aside>

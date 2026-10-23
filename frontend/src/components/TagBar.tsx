@@ -2,10 +2,11 @@ import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { TagWithCount } from '../types'
 
-export function TagBar({ tags, total, active, variant = 'inline' }: {
+export function TagBar({ tags, untagged, active, untaggedActive = false, variant = 'inline' }: {
   tags: TagWithCount[]
-  total: number
+  untagged: number
   active: string | null
+  untaggedActive?: boolean
   variant?: 'inline' | 'sidebar'
 }) {
   // 没有讨论的标签不展示，避免空板块占位置
@@ -13,7 +14,13 @@ export function TagBar({ tags, total, active, variant = 'inline' }: {
 
   return (
     <nav className={`tagbar ${variant}`}>
-      <Link to="/" className={active ? '' : 'active'}>全部<span className="n">{total}</span></Link>
+      <Link
+        to="/?untagged=1"
+        className={untaggedActive ? 'active' : ''}
+        style={{ '--tag': '#999' } as CSSProperties}
+      >
+        无标签<span className="n">{untagged}</span>
+      </Link>
       {visible.map((t) => (
         <Link
           key={t.id}

@@ -21,7 +21,13 @@ async def meta(session: SessionDep, user: OptionalUser) -> dict[str, int | str]:
         .where(discussion_visible(user), Discussion.is_collapsed.is_(False))
     ) or 0
     users = await session.scalar(select(func.count()).select_from(User)) or 0
+    untagged = await session.scalar(
+        select(func.count()).select_from(Discussion)
+        .where(discussion_visible(user), Discussion.is_collapsed.is_(False),
+               ~Discussion.tags.any())
+    ) or 0
     return {
         "discussions": discussions, "posts": posts, "users": users,
+        "untagged": untagged,
         "timezone": settings.timezone,
     }

@@ -10,18 +10,24 @@ interface Meta {
 }
 
 /** 宽屏侧栏：导航、标签、站点统计、页脚。首页和帖子页共用。 */
-export function Sidebar({ tags, total, meta, active = null }: {
+export function Sidebar({ tags, meta, active = null, untaggedActive = false }: {
   tags: TagWithCount[]
-  total: number
-  meta: Meta | undefined
+  meta: (Meta & { untagged: number }) | undefined
   active?: string | null
+  untaggedActive?: boolean
 }) {
   return (
     <>
       <SidebarHeader />
 
       <h2>标签</h2>
-      <TagBar tags={tags} total={total} active={active} variant="sidebar" />
+      <TagBar
+        tags={tags}
+        untagged={meta?.untagged ?? 0}
+        active={active}
+        untaggedActive={untaggedActive}
+        variant="sidebar"
+      />
 
       <h2>站点</h2>
       <dl className="site-stats">
