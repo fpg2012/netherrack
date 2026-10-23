@@ -14,6 +14,7 @@
     --line-strong: #4d4d4d;
     --card-line: #333333;
     --card-line-hover: #4d4d4d;
+    --post-bg: #1f1f1f;
     --title: #dcdcdc;
   }
 }
@@ -224,6 +225,7 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
 .post {
   position: relative;
   border: 1px solid var(--line);
+  background: var(--post-bg);
   margin: 1.2em 0;
   padding-bottom: .4em;
 }
