@@ -1,3 +1,7 @@
+<p>
+  <img src="docs/netherrack.svg" width="56" height="56" alt="netherrack">
+</p>
+
 # netherrack（地狱岩）
 
 论坛重写：**FastAPI + PostgreSQL + React(TS)**。接口只提供 JSON，前端是纯 SPA，
