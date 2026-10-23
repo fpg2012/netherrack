@@ -10,6 +10,7 @@ import type { MenuItem } from '../components/Dropdown'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { Sidebar } from '../components/Sidebar'
 import { datetime, displayName } from '../lib/format'
+import { tagTone } from '../lib/tag'
 import { useDraft } from '../lib/draft'
 import type { Post } from '../types'
 
@@ -150,7 +151,7 @@ export function DiscussionPage() {
 
       <div className="post-tags">
         {d.tags.map((t) => (
-          <span key={t.id} className="tag" style={{ '--tag': t.color ?? '#999' } as never}>
+          <span key={t.id} className="tag" data-tone={tagTone(t.color)} style={{ '--tag': t.color ?? '#999' } as never}>
             <Link to={`/?tag=${t.slug}`}>{t.name}</Link>
           </span>
         ))}
@@ -171,7 +172,7 @@ export function DiscussionPage() {
                       ? [...picked, t.slug]
                       : picked.filter((s) => s !== t.slug))}
                   />
-                  <span className="tag" style={{ '--tag': t.color ?? '#999' } as never}>
+                  <span className="tag" data-tone={tagTone(t.color)} style={{ '--tag': t.color ?? '#999' } as never}>
                     {t.name}
                   </span>
                 </label>

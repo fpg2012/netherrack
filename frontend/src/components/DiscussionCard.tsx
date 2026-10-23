@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { DiscussionBrief } from '../types'
 import { date } from '../lib/format'
+import { tagTone } from '../lib/tag'
 
 export function DiscussionCard({ d }: { d: DiscussionBrief }) {
   // 只用回复数控制深浅（对数压缩，避免热帖一下子变黑）
@@ -14,7 +15,8 @@ export function DiscussionCard({ d }: { d: DiscussionBrief }) {
       {d.tags.length > 0 && (
         <div className="card-tags">
           {d.tags.map((t) => (
-            <span key={t.id} className="tag" style={{ '--tag': t.color ?? '#999' } as CSSProperties}>
+            <span key={t.id} className="tag" data-tone={tagTone(t.color)}
+              style={{ '--tag': t.color ?? '#999' } as CSSProperties}>
               {t.name}
             </span>
           ))}
