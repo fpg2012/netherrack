@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useBroadcast, useMe, useNotifications, useReadAll } from '../api/hooks'
+import {
+  useBroadcast, useMarkRead, useMe, useNotifications, useReadAll,
+} from '../api/hooks'
 import { datetime, displayName } from '../lib/format'
 
 const KIND_TEXT: Record<string, string> = {
@@ -15,6 +17,7 @@ export function NotificationsPage() {
   const [page, setPage] = useState(1)
   const list = useNotifications(page)
   const readAll = useReadAll()
+  const markRead = useMarkRead()
   const broadcast = useBroadcast()
   // 顶栏菜单「发送系统通知」跳过来时直接把表单展开
   const [params] = useSearchParams()
@@ -90,7 +93,8 @@ export function NotificationsPage() {
               </>
             ) : (
               <>
-                <Link to={`/d/${n.discussion_id}#p${n.post_id}`} className="notif-title">
+                <Link to={`/d/${n.discussion_id}#p${n.post_id}`} className="notif-title"
+                      onClick={() => { if (!n.read) markRead.mutate(n.id) }}>
                   {n.discussion_title}
                 </Link>
                 <div className="muted small">

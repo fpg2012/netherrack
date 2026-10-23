@@ -75,7 +75,11 @@ export function useCreateDiscussion() {
 export function useReply(discussionId: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: { body_md: string; quote_post_id?: number | null }) =>
+    mutationFn: (body: {
+      body_md: string
+      quote_post_id?: number | null
+      reply_to_post_id?: number | null
+    }) =>
       api.post<Post>(`/discussions/${discussionId}/posts`, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['timeline', discussionId] })
@@ -203,6 +207,14 @@ export function useBroadcast() {
   return useMutation({
     mutationFn: (body: { title: string; body: string }) =>
       api.post<{ sent: number }>('/notifications/broadcast', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  })
+}
+
+export function useMarkRead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.post<void>(`/notifications/${id}/read`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
 }

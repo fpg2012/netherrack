@@ -17,12 +17,14 @@ from app.schemas.content import (
     UserBrief,
 )
 from app.schemas.write import EditDiscussion, NewDiscussion, NewPost
+from app.services.audit import audit
 from app.services.content import event_text, render_markdown
 from app.services.mentions import link_mentions, mentionable_users, username_map
 from app.services.notifications import (
     notify_best_answer,
     notify_mentions,
     notify_reply,
+    notify_reply_to,
 )
 from app.services.quote import build_quote
 from app.services.search import index_text, segment
@@ -229,6 +231,12 @@ async def reply(request: Request, discussion_id: int, payload: NewPost, session:
     if discussion.is_locked and not user.is_admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "讨论已锁定")
 
+    reply_to = None
+    if payload.reply_to_post_id:
+        reply_to = await session.get(Post, payload.reply_to_post_id)
+        if reply_to is None or reply_to.discussion_id != discussion_id:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "回复的楼层不在该讨论中")
+
     number = (await session.scalar(
         select(func.coalesce(func.max(Post.number), 0)).where(
             Post.discussion_id == discussion_id)
@@ -257,6 +265,8 @@ async def reply(request: Request, discussion_id: int, payload: NewPost, session:
     skip = {discussion.author_id}
     if quoted is not None:
         skip.add(quoted.author_id)
+    if reply_to is not None:
+        await notify_reply_to(session, post=post, target=reply_to, actor_id=user.id)
     await notify_mentions(session, post_id=post.id, discussion_id=discussion.id,
                           actor_id=user.id, user_ids=mentioned, skip=skip)
     await notify_reply(session, post=post, discussion=discussion, actor_id=user.id, quote=quoted)
@@ -314,6 +324,9 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
         if payload.is_public and discussion.is_collapsed:
             raise HTTPException(status.HTTP_409_CONFLICT, "折叠的讨论不能设为公开")
         discussion.is_public = payload.is_public
+        await audit(session, actor_id=user.id, action="discussion.visibility",
+                    target_type="discussion", target_id=discussion.id,
+                    is_public=payload.is_public)
 
     if payload.is_collapsed is not None and payload.is_collapsed != discussion.is_collapsed:
         discussion.is_collapsed = payload.is_collapsed
@@ -322,6 +335,9 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
             discussion.is_public = False
         _record(session, discussion.id, user.id, "discussionCollapsed",
                 {"collapsed": payload.is_collapsed})
+        await audit(session, actor_id=user.id, action="discussion.collapse",
+                    target_type="discussion", target_id=discussion.id,
+                    collapsed=payload.is_collapsed)
 
     if payload.best_answer_post_id is not None:
         post = await session.get(Post, payload.best_answer_post_id)

@@ -17,13 +17,14 @@ interface Props {
   onEdit: (id: number, body: string) => void
   onBest: (id: number) => void
   onCollapse: (id: number, collapsed: boolean) => void
+  onReplyTo: (post: Post) => void
   mentionable?: UserBrief[]
   saving: boolean
 }
 
 export function PostCard({
   post, best, canEdit, canModerate, quoteOn, onQuote, onEdit, onBest, onCollapse,
-  mentionable, saving,
+  onReplyTo, mentionable, saving,
 }: Props) {
   const body = useRef<HTMLDivElement>(null)
   const [editing, setEditing] = useState(false)
@@ -51,7 +52,10 @@ export function PostCard({
           {post.is_collapsed && <span className="folded">已折叠</span>}
           {best && <span className="best">最佳回复</span>}
           {quoteOn && !post.is_collapsed && (
-            <button type="button" title="引用这一楼" onClick={() => onQuote(post)}>引用</button>
+            <>
+              <button type="button" title="回复这一楼" onClick={() => onReplyTo(post)}>回复</button>
+              <button type="button" title="引用这一楼" onClick={() => onQuote(post)}>引用</button>
+            </>
           )}
           {canEdit && !post.is_legacy && !post.is_collapsed && !editing && (
             <button type="button" title="编辑这一楼"

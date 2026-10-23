@@ -18,6 +18,7 @@ from app.schemas.user import (
     UserPostItem,
     UserProfile,
 )
+from app.services.audit import audit
 from app.services.content import plain_text
 from app.services.visibility import discussion_visible
 
@@ -78,16 +79,22 @@ async def list_users(
 async def update_me(
     payload: ProfileUpdate, session: SessionDep, viewer: CurrentUser
 ) -> UserProfile:
+    changed = []
     if payload.nickname is not None:
         nickname = payload.nickname.strip()
         if len(nickname) > 32:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "昵称最多 32 个字")
         viewer.nickname = nickname or None
+        changed.append("nickname")
     if payload.bio is not None:
         bio = payload.bio.strip()
         if len(bio) > 500:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "自我介绍最多 500 个字")
         viewer.bio = bio or None
+        changed.append("bio")
+    if changed:
+        await audit(session, actor_id=viewer.id, action="profile.update",
+                    target_type="user", target_id=viewer.id, fields=changed)
     await session.commit()
     posts, discussions = await _counts(session, viewer.id, viewer)
     return UserProfile(
@@ -155,6 +162,8 @@ async def upload_avatar(
         raise
 
     viewer.avatar_path = name
+    await audit(session, actor_id=viewer.id, action="avatar.update",
+                target_type="user", target_id=viewer.id, file=name)
     await session.commit()
     posts, discussions = await _counts(session, viewer.id, viewer)
     return UserProfile(
@@ -174,6 +183,8 @@ async def change_password(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "当前密码不正确")
     if payload.new_password == payload.current_password:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "新密码不能和旧密码相同")
+    await audit(session, actor_id=viewer.id, action="account.password",
+                target_type="user", target_id=viewer.id)
     viewer.password_hash = hash_password(payload.new_password)
     # 改密码后让其他设备上的会话失效
     await session.execute(delete(RefreshToken).where(RefreshToken.user_id == viewer.id))

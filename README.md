@@ -50,9 +50,9 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 - 账号：登录、登出（立即吊销 access token）、refresh 轮换、CSRF 双提交
 - 用户列表：`/users`，按用户名筛选，显示注册时间、发帖数、讨论数
 - 用户主页：`/u/:id`，资料 + 讨论/回复两个标签页
-- 通知：回复、引用、最佳回复会通知对方；`/notifications` 可全部标为已读，
-  顶栏「通知」显示未读数；有新通知时通过 SSE（`GET /api/v1/stream`）即时推送，
-  轮询只做兜底（2 分钟一次）
+- 通知：回复、引用、最佳回复、回复某一楼、@ 提及都会通知对方；点开某条通知
+  自动标为已读，也可一键全部已读；顶栏「通知」显示未读数，有新通知时通过
+  SSE（`GET /api/v1/stream`）即时推送，轮询只做兜底（2 分钟一次）
 - @ 提及：正文里的 `@用户名` 渲染成指向个人主页的链接（按真实用户名匹配，
   不会误伤邮箱），被提及会收到「在帖子里提到了你」通知；迁移数据里的
   `@"name"#p123` 用 `make mentions` 清理成 `@name`
@@ -63,9 +63,11 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
   校验文件头而非只看扩展名）和密码；改密码会吊销其他设备的 refresh token，
   前端提示重新登录
 - 发帖：`/new` 新建讨论（标题、板块、Markdown 正文）
-- 回复：讨论底部编辑器，支持引用某层楼（自动生成 Markdown 引用块）
+- 回复：讨论底部编辑器，可直接「回复某一楼」（通知该层作者）或「引用」（生成引用块）
+- 草稿：新帖和回复的未提交内容自动存 localStorage，刷新/误关后恢复，提交后清除
 - 编辑：作者或管理员可改自己的帖子（迁移的旧帖只读，避免 XML↔Markdown 失真）
-- 管理：置顶/锁定、改标签、设为最佳回复，都会写入 `discussion_events`
+- 管理：置顶/锁定、改标签、设为最佳回复会写入 `discussion_events`；
+  折叠楼层、折叠讨论、改公开状态、发系统通知、改资料/头像/密码写入 `audit_logs`
 - 预览：`POST /api/v1/preview` 与正式发帖共用同一套渲染+清洗
 - 附件：`POST /api/v1/uploads`（multipart），支持 png/jpg/jpeg/gif/webp/avif、
   mp4/webm/mp3/ogg/wav、pdf/txt/md/zip；单个文件大小上限在 `config.toml`
@@ -109,7 +111,8 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 - **内容**：新帖存 Markdown，渲染后经 nh3 清洗入 `body_html`；迁移数据保留原
   s9e HTML，`is_legacy=true`。
 - **事件**：改标题/改标签等操作存在 `discussion_events`，不混进 posts。
-- **搜索**：`pg_trgm` + `ILIKE`，见 `migrations/versions/*` 里的 GIN 索引。
+- **搜索**：jieba 分词写入 `search_text`，PostgreSQL 生成列 + GIN 索引，
+  查询走 `plainto_tsquery`（AND 无结果时放宽为 OR）。
 
 
 ## 部署安全
@@ -129,6 +132,27 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
    `client_ip()` 会取第一个地址；否则所有用户共用一个限流桶
 5. **接口文档默认关闭**：`DEBUG=false` 时 `/api/docs` 和 `/api/openapi.json` 返回 404，
    需要时用 `DEBUG=true` 打开
-6. 多 worker 时把 `app/core/ratelimit.py` 的存储换成 Redis，否则每个进程各算一份
-7. SSE 是进程内事件总线，`/api/v1/stream` 只认识当前 worker 上的连接；
-   多 worker 要跨进程广播得接 Postgres `LISTEN/NOTIFY` 或 Redis pub/sub
+6. 多 worker 的坑见下一节
+
+## 多 worker 注意事项
+
+当前的实现有**两处状态在进程内存里**，单 worker（`make backend` 的默认）没问题，
+一旦加 `--workers N` 就会静默出错：
+
+| 组件 | 问题 | 表现 | 修法 |
+|---|---|---|---|
+| `app/core/ratelimit.py` | 每个进程各记一份计数 | 实际额度变成 N 倍；登录防爆破失效 | `Limiter(storage_uri="redis://...")` |
+| `app/services/events.py` | SSE 只认识当前进程的连接 | 用户连在 A、通知产生在 B，前端收不到推送（会退化到 2 分钟轮询） | Postgres `LISTEN/NOTIFY` 或 Redis pub/sub |
+
+数据库、会话、通知已读状态、审计日志都在 PostgreSQL 里，多 worker 天然一致。
+如果暂时不想改，就保持单 worker，或者接受"额度放宽 + 推送延迟"。
+
+## 测试
+
+```bash
+cd backend && uv run pytest        # 单元测试 + API 集成测试
+```
+
+集成测试用真实 PostgreSQL（复用 `DATABASE_URL`），每个用例包在一个外层事务里，
+结束整体回滚，不会动开发库的数据。所以跑测试前需要数据库在运行（`make db`）。
+

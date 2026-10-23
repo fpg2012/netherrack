@@ -11,7 +11,7 @@ from app.models import Discussion, Post
 router = APIRouter(tags=["assets"])
 
 PUBLIC_SUFFIXES = {
-    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".pdf",
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif",
     ".mp4", ".webm", ".mp3", ".ogg", ".wav",
 }
 

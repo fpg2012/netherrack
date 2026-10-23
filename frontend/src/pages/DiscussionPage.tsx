@@ -9,6 +9,7 @@ import { Dropdown } from '../components/Dropdown'
 import type { MenuItem } from '../components/Dropdown'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { datetime, displayName } from '../lib/format'
+import { useDraft } from '../lib/draft'
 import type { Post } from '../types'
 
 export function DiscussionPage() {
@@ -26,8 +27,9 @@ export function DiscussionPage() {
   const collapsePost = useCollapsePost(discussionId)
   const mentionable = useMentionable(discussionId)
 
-  const [draft, setDraft] = useState('')
+  const [draft, setDraft, clearDraft] = useDraft(`draft:reply:${discussionId}`, '')
   const [quote, setQuote] = useState<Post | null>(null)
+  const [replyTo, setReplyTo] = useState<Post | null>(null)
   const [tagEditor, setTagEditor] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
   const replyBox = useRef<HTMLTextAreaElement>(null)
@@ -167,6 +169,7 @@ export function DiscussionPage() {
             onBest={(postId) => editDiscussion.mutate({ best_answer_post_id: postId })}
             onCollapse={(postId, collapsed) =>
               collapsePost.mutate({ id: postId, is_collapsed: collapsed })}
+            onReplyTo={(post) => { setReplyTo(post); replyBox.current?.focus() }}
             mentionable={mentionable.data}
             saving={editPost.isPending}
           />
@@ -197,6 +200,14 @@ export function DiscussionPage() {
               </button>
             </p>
           )}
+          {replyTo && (
+            <p className="muted">
+              正在回复 #{replyTo.number} {displayName(replyTo.author)}{' '}
+              <button type="button" className="linklike" onClick={() => setReplyTo(null)}>
+                取消
+              </button>
+            </p>
+          )}
           <MarkdownEditor value={draft} onChange={setDraft} rows={8}
                           mentionable={mentionable.data}
                           placeholder="支持 Markdown，$公式$ 会被 KaTeX 渲染" />
@@ -206,8 +217,18 @@ export function DiscussionPage() {
               disabled={reply.isPending || !draft.trim()}
               onClick={() => {
                 reply.mutate(
-                  { body_md: draft, quote_post_id: quote?.id ?? null },
-                  { onSuccess: () => { setDraft(''); setQuote(null) } },
+                  {
+                    body_md: draft,
+                    quote_post_id: quote?.id ?? null,
+                    reply_to_post_id: replyTo?.id ?? null,
+                  },
+                  {
+                    onSuccess: () => {
+                      clearDraft()
+                      setQuote(null)
+                      setReplyTo(null)
+                    },
+                  },
                 )
               }}
             >

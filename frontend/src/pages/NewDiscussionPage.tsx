@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCreateDiscussion, useMe, useTags } from '../api/hooks'
 import { MarkdownEditor } from '../components/MarkdownEditor'
+import { useDraft } from '../lib/draft'
 
 export function NewDiscussionPage() {
   const navigate = useNavigate()
@@ -9,9 +9,9 @@ export function NewDiscussionPage() {
   const tags = useTags()
   const create = useCreateDiscussion()
 
-  const [title, setTitle] = useState('')
-  const [body, setBody] = useState('')
-  const [picked, setPicked] = useState<string[]>([])
+  const [title, setTitle, clearTitle] = useDraft('draft:new:title', '')
+  const [body, setBody, clearBody] = useDraft('draft:new:body', '')
+  const [picked, setPicked, clearPicked] = useDraft<string[]>('draft:new:tags', [])
 
   if (!me.data) {
     return <p className="muted"><Link to="/login">登录</Link> 后才能发帖。</p>
@@ -25,7 +25,14 @@ export function NewDiscussionPage() {
           e.preventDefault()
           create.mutate(
             { title, body_md: body, tags: picked },
-            { onSuccess: (d) => navigate(`/d/${d.id}`) },
+            {
+              onSuccess: (d) => {
+                clearTitle()
+                clearBody()
+                clearPicked()
+                navigate(`/d/${d.id}`)
+              },
+            },
           )
         }}
       >

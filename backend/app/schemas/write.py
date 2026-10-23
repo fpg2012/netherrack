@@ -10,6 +10,8 @@ class NewDiscussion(BaseModel):
 class NewPost(BaseModel):
     body_md: str = Field(min_length=1, max_length=50_000)
     quote_post_id: int | None = None
+    # 只在「回复某一楼」时给，用来通知那个楼层的作者
+    reply_to_post_id: int | None = None
 
 
 class EditPost(BaseModel):

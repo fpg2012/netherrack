@@ -31,6 +31,12 @@ async def notify_reply(session, *, post: Post, discussion: Discussion, actor_id:
                      kind="quote", discussion_id=discussion.id, post_id=post.id)
 
 
+async def notify_reply_to(session, *, post: Post, target: Post, actor_id: int) -> None:
+    """回复了某一楼：通知该层作者（和楼主是同一个人时由唯一约束去重）。"""
+    await notify(session, recipient_id=target.author_id, actor_id=actor_id,
+                 kind="reply", discussion_id=post.discussion_id, post_id=post.id)
+
+
 async def notify_best_answer(session, *, post: Post, actor_id: int) -> None:
     await notify(session, recipient_id=post.author_id, actor_id=actor_id,
                  kind="best_answer", discussion_id=post.discussion_id, post_id=post.id)

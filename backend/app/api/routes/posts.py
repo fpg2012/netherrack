@@ -7,6 +7,7 @@ from app.core.ratelimit import limiter
 from app.models import Discussion, Post
 from app.schemas.content import PostOut
 from app.schemas.write import CollapsePost, EditPost
+from app.services.audit import audit
 from app.services.content import render_markdown
 from app.services.mentions import link_mentions, mentionable_users
 from app.services.notifications import notify_mentions
@@ -73,6 +74,9 @@ async def collapse_post(request: Request, post_id: int, payload: CollapsePost,
         raise HTTPException(status.HTTP_404_NOT_FOUND, "帖子不存在")
     if post.is_collapsed != payload.is_collapsed:
         post.is_collapsed = payload.is_collapsed
+        await audit(session, actor_id=user.id, action="post.collapse",
+                    target_type="post", target_id=post.id,
+                    collapsed=payload.is_collapsed, discussion_id=post.discussion_id)
         await session.commit()
     await session.refresh(post, ["author"])
     out = PostOut.model_validate(post)

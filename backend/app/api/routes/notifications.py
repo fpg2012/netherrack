@@ -9,6 +9,7 @@ from app.models import Discussion, Notification, Post, User
 from app.schemas.common import Page
 from app.schemas.content import UserBrief
 from app.schemas.notification import NoticeIn, NotificationOut
+from app.services.audit import audit
 from app.services.events import mark_notified
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -111,5 +112,7 @@ async def broadcast(request: Request, payload: NoticeIn, session: SessionDep,
             title=title, body=body,
         ))
     mark_notified(session, recipients)
+    await audit(session, actor_id=user.id, action="notice.broadcast",
+                target_type="notification", payload={"title": title, "recipients": len(recipients)})
     await session.commit()
     return {"sent": len(recipients)}
