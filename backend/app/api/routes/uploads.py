@@ -16,17 +16,25 @@ router = APIRouter(prefix="/uploads", tags=["uploads"])
 # 只放行这几类：图片、PDF、纯文本、压缩包。
 # 不放 SVG/HTML —— 同源返回会变成存储型 XSS。
 ALLOWED = {
+    # 图片
     ".png": "image/png",
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
     ".gif": "image/gif",
     ".webp": "image/webp",
+    ".avif": "image/avif",
+    # 音视频
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+    ".mp3": "audio/mpeg",
+    ".ogg": "audio/ogg",
+    ".wav": "audio/wav",
+    # 文档与压缩包
     ".pdf": "application/pdf",
     ".txt": "text/plain",
     ".md": "text/plain",
     ".zip": "application/zip",
 }
-MAX_BYTES = 10 * 1024 * 1024
 CHUNK = 64 * 1024
 _SAFE = re.compile(r"[^A-Za-z0-9._-]+")
 
@@ -60,14 +68,17 @@ async def upload(request: Request, file: UploadFile, session: SessionDep,
     name = f"{uid}-{stem}{suffix}"
     target = target_dir / name
 
+    max_bytes = settings.upload_max_bytes
     size = 0
     try:
         with target.open("wb") as out:
             while chunk := await file.read(CHUNK):
                 size += len(chunk)
-                if size > MAX_BYTES:
-                    raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                                        f"文件超过 {MAX_BYTES // 1024 // 1024} MB")
+                if size > max_bytes:
+                    raise HTTPException(
+                        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        f"文件超过 {max_bytes / 1024 / 1024:g} MB",
+                    )
                 out.write(chunk)
     except Exception:
         target.unlink(missing_ok=True)

@@ -3,6 +3,7 @@ import { useAllUsers, usePreview } from '../api/hooks'
 import type { UserBrief } from '../types'
 import { api } from '../api/client'
 import { Avatar } from './Avatar'
+import { toast } from './Toast'
 import { setupFolding } from '../lib/fold'
 import { renderMath } from '../lib/math'
 
@@ -70,7 +71,6 @@ export function MarkdownEditor({
   const [caret, setCaret] = useState({ top: 0, left: 0 })
   const [active, setActive] = useState(0)
   const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   // 键盘上下移动时，让选中项保持在候选列表的可视范围内
   useEffect(() => {
@@ -140,7 +140,6 @@ export function MarkdownEditor({
 
   const upload = async (file: File) => {
     setUploading(true)
-    setError(null)
     try {
       const form = new FormData()
       form.append('file', file)
@@ -150,7 +149,7 @@ export function MarkdownEditor({
         : `[${res.filename}](${res.url})`
       insert(snippet)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '上传失败')
+      toast(err instanceof Error ? err.message : '上传失败')
     } finally {
       setUploading(false)
       if (picker.current) picker.current.value = ''
@@ -252,7 +251,6 @@ export function MarkdownEditor({
         </div>
       )}
       {preview.isPending && <p className="hint">渲染中…</p>}
-      {error && <p className="event">{error}</p>}
       {preview.isError && <p className="event">预览失败</p>}
     </div>
   )

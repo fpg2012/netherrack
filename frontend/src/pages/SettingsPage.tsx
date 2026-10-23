@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useChangePassword, useLogout, useMe, useUpdateProfile, useUploadAvatar } from '../api/hooks'
 import { Avatar } from '../components/Avatar'
+import { toast } from '../components/Toast'
 
 function Message({ tone, children }: { tone: 'ok' | 'err'; children: string }) {
   return <p className={tone === 'ok' ? 'msg ok' : 'msg err'}>{children}</p>
@@ -81,12 +82,13 @@ export function SettingsPage() {
                           onSuccess: () => {
                             setFile(null)
                             if (fileInput.current) fileInput.current.value = ''
+                            toast('头像已更新')
                           },
+                          onError: (err) => toast(err.message),
                         })
                       }}>
                 {avatar.isPending ? '上传中…' : '上传'}
               </button>
-              {avatar.isError && <Message tone="err">{avatar.error.message}</Message>}
             </div>
           </div>
         </div>

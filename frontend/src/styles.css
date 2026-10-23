@@ -938,3 +938,44 @@ pre.is-folded {
   .mention-picker { background: #242424; border-color: #3a3a3a; }
   .mention-picker button:hover, .mention-picker button.active { background: #2f2f2f; }
 }
+
+/* Toast：上传失败之类的即时提示 */
+.toasts {
+  position: fixed;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: .5em;
+  max-width: min(24rem, calc(100vw - 2.4rem));
+}
+.toast {
+  padding: .5em .8em;
+  border: 1px solid #1a1a1a;
+  border-left: 3px solid #b3261e;
+  border-radius: 2px;
+  background: #fdfdfd;
+  color: #1a1a1a;
+  font-size: 85%;
+  line-height: 1.5;
+  cursor: pointer;
+  animation: toast-in .15s ease-out;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(.3em); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .toast {
+    background: #242424;
+    color: #e8e8e8;
+    border-color: #4a4a4a;
+    border-left-color: #e57373;
+  }
+}
+
+@media (max-width: 640px) {
+  .toasts { right: .8rem; left: .8rem; bottom: .8rem; max-width: none; }
+}

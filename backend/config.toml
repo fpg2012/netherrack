@@ -20,6 +20,10 @@ cors_origins = ["http://localhost:5173"]
 # 部署在 nginx 后面时设 true，限流才按真实客户端 IP 计数
 trust_proxy = false
 
+# ---- 上传 ----
+upload_max_bytes = 5242880    # 附件单个文件上限：5 MB
+avatar_max_bytes = 2097152    # 头像上限：2 MB
+
 # ---- 分页 ----
 page_size = 20
 max_page_size = 100

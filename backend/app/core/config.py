@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     assets_dir: Path = BASE_DIR.parent / "data" / "public" / "assets"
     legacy_dump: Path = BASE_DIR.parent / "data" / "flarum-2026-10-23.sql.gz"
 
+    upload_max_bytes: int = 5 * 1024 * 1024
+    avatar_max_bytes: int = 2 * 1024 * 1024
+
     page_size: int = 20
     max_page_size: int = 100
 

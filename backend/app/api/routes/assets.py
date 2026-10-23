@@ -10,7 +10,10 @@ from app.models import Discussion, Post
 
 router = APIRouter(tags=["assets"])
 
-PUBLIC_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf"}
+PUBLIC_SUFFIXES = {
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".pdf",
+    ".mp4", ".webm", ".mp3", ".ogg", ".wav",
+}
 
 
 @router.get("/media/{path:path}")

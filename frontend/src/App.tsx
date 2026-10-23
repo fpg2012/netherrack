@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import { Header } from './components/Header'
+import { ToastHost } from './components/Toast'
 import { IndexPage } from './pages/IndexPage'
 import { DiscussionPage } from './pages/DiscussionPage'
 import { SearchPage } from './pages/SearchPage'
@@ -14,6 +15,7 @@ export function App() {
   return (
     <>
       <Header />
+      <ToastHost />
       <main className="page">
         <Routes>
         <Route path="/" element={<IndexPage />} />

@@ -66,7 +66,9 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 - 编辑：作者或管理员可改自己的帖子（迁移的旧帖只读，避免 XML↔Markdown 失真）
 - 管理：置顶/锁定、改标签、设为最佳回复，都会写入 `discussion_events`
 - 预览：`POST /api/v1/preview` 与正式发帖共用同一套渲染+清洗
-- 附件：`POST /api/v1/uploads`（multipart），图片/PDF/文本/zip，单个 ≤10 MB；
+- 附件：`POST /api/v1/uploads`（multipart），支持 png/jpg/jpeg/gif/webp/avif、
+  mp4/webm/mp3/ogg/wav、pdf/txt/md/zip；单个文件大小上限在 `config.toml`
+  的 `upload_max_bytes`（默认 5 MB），头像上限 `avatar_max_bytes`（默认 2 MB）
   文件名重写为 `<uuid>-<原名>`，按日期分目录存在 `data/public/assets/files/`
 
 ## 访问控制与限流

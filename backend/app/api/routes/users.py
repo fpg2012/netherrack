@@ -97,8 +97,8 @@ async def update_me(
     )
 
 
-AVATAR_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
-AVATAR_MAX = 2 * 1024 * 1024
+AVATAR_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif"}
+
 _MAGIC = {
     b"\x89PNG\r\n\x1a\n": {".png"},
     b"\xff\xd8\xff": {".jpg", ".jpeg"},
@@ -110,6 +110,9 @@ _MAGIC = {
 def _looks_like_image(head: bytes, suffix: str) -> bool:
     if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
         return suffix == ".webp"
+    # AVIF：ISOBMFF 容器，brand 在偏移 8
+    if head[4:8] == b"ftyp" and head[8:12] in {b"avif", b"avis"}:
+        return suffix == ".avif"
     return any(head.startswith(magic) and suffix in suffixes for magic, suffixes in _MAGIC.items())
 
 
@@ -142,9 +145,10 @@ async def upload_avatar(
                                             "文件内容不是有效的图片")
                     first = False
                 size += len(chunk)
-                if size > AVATAR_MAX:
+                if size > settings.avatar_max_bytes:
+                    limit = settings.avatar_max_bytes / 1024 / 1024
                     raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                                        f"头像不能超过 {AVATAR_MAX // 1024 // 1024} MB")
+                                        f"头像不能超过 {limit:g} MB")
                 out.write(chunk)
     except Exception:
         target.unlink(missing_ok=True)
