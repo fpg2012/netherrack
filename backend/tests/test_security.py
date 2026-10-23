@@ -46,3 +46,24 @@ def test_production_rejects_insecure_settings() -> None:
         Settings(**{**base, "cors_origins": ["http://localhost:5173"]})
     # 合规配置可以启动
     assert Settings(**base).cookie_secure is True
+
+
+def test_toml_config_loaded() -> None:
+    from app.core.config import Settings
+
+    s = Settings(_env_file=None, jwt_secret="x" * 40)
+    assert s.app_name == "soulsand"
+    assert s.page_size == 20
+    # 相对路径按 backend/ 解析成绝对路径
+    assert s.assets_dir.is_absolute()
+    assert s.assets_dir.parts[-3:] == ("data", "public", "assets")
+
+
+def test_env_overrides_toml(monkeypatch) -> None:
+    from app.core.config import Settings
+
+    monkeypatch.setenv("PAGE_SIZE", "7")
+    monkeypatch.setenv("APP_NAME", "from-env")
+    s = Settings(_env_file=None, jwt_secret="x" * 40)
+    assert s.page_size == 7
+    assert s.app_name == "from-env"

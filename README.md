@@ -83,6 +83,21 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
   - 上传 20 次/小时
   多 worker 部署时把 `app/core/ratelimit.py` 的存储换成 Redis
 
+## 配置
+
+配置分两层：
+
+| 文件 | 内容 |
+|---|---|
+| `backend/config.toml` | 非敏感项：站点名、env/debug、token 有效期、cookie 策略、CORS、分页、路径 |
+| `backend/.env` | 只放密钥：`DATABASE_URL`、`JWT_SECRET`（以及可选的 `CONFIG_FILE`） |
+
+优先级：**环境变量 > `.env` > `config.toml` > `config.py` 里的默认值**。部署时用环境变量临时覆盖任何一项都可以，比如 `COOKIE_SECURE=true`。
+
+`CONFIG_FILE=/etc/flarum-web/config.toml` 可以指向另一份 TOML，方便生产环境把配置放在代码目录外。相对路径（`assets_dir`、`legacy_dump`）按 `backend/` 解析。
+
+改完 `.env` 或 `config.toml` 后需要重启后端（本地 `make backend` 带 `--reload`）。
+
 ## 约定
 
 - **认证**：access/refresh 两个 JWT 全放 `HttpOnly` cookie；所有写操作要求

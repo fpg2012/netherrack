@@ -1,16 +1,31 @@
-"""集中配置：全部来自环境变量，不在代码里写死密钥。"""
+"""集中配置。
+
+优先级：环境变量 > backend/.env > backend/config.toml > 这里的默认值。
+密钥只放 .env（或环境变量），config.toml 只存非敏感项。
+"""
+import os
 from functools import lru_cache
 from pathlib import Path
 
 from pydantic import Field, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+    TomlConfigSettingsSource,
+)
 
 BASE_DIR = Path(__file__).resolve().parents[2]
+# 生产环境可以用 CONFIG_FILE 指到 /etc/... 下的配置
+CONFIG_FILE = Path(os.environ.get("CONFIG_FILE", BASE_DIR / "config.toml"))
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=BASE_DIR / ".env", env_file_encoding="utf-8", extra="ignore"
+        env_file=BASE_DIR / ".env",
+        env_file_encoding="utf-8",
+        toml_file=CONFIG_FILE,
+        extra="ignore",
     )
 
     app_name: str = "flarum-api"
@@ -38,18 +53,45 @@ class Settings(BaseSettings):
     page_size: int = 20
     max_page_size: int = 100
 
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        # 越靠前优先级越高：显式参数 > 环境变量 > .env > config.toml
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            TomlConfigSettingsSource(settings_cls),
+            file_secret_settings,
+        )
+
+    @model_validator(mode="after")
+    def _resolve_paths(self) -> "Settings":
+        # 相对路径按 backend/ 解析，避免依赖启动时的工作目录
+        for name in ("assets_dir", "legacy_dump"):
+            path = getattr(self, name)
+            if not path.is_absolute():
+                setattr(self, name, (BASE_DIR / path).resolve())
+        return self
+
     @model_validator(mode="after")
     def _production_checks(self) -> "Settings":
         if self.env != "production":
             return self
         problems = []
         if not self.cookie_secure:
-            problems.append("COOKIE_SECURE 必须为 true")
+            problems.append("cookie_secure 必须为 true（config.toml 或环境变量）")
         if any(host in origin for origin in self.cors_origins
                for host in ("localhost", "127.0.0.1")):
-            problems.append("CORS_ORIGINS 还是本地地址")
+            problems.append("cors_origins 还是本地地址")
         if self.jwt_secret.startswith("dev-only"):
-            problems.append("JWT_SECRET 还是默认值")
+            problems.append("jwt_secret 还是默认值")
         if problems:
             raise ValueError("生产环境配置不完整：" + "；".join(problems))
         return self
