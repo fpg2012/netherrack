@@ -4,11 +4,17 @@
   /* 容器/分隔线：浅色模式下不要用接近纯黑的边框 */
   --line: #d4d4d4;
   --line-strong: #b9b9b9;
+  --card-line: #dedede;
+  --card-line-hover: #bfbfbf;
+  --card-hover-bg: #fcfcfc;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --line: #3a3a3a;
     --line-strong: #4d4d4d;
+    --card-line: #333333;
+    --card-line-hover: #4d4d4d;
+    --card-hover-bg: #202020;
   }
 }
 
@@ -146,24 +152,25 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
 /* 讨论网格 */
 .grid {
   display: grid;
-  gap: 1em;
-  margin: 1.4em 0;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.3em;
+  margin: 1.6em 0;
+  /* 48rem 宽度下排两列，比三列宽松，标题也少折行 */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 .card {
   display: block;
-  padding: .6em .8em;
-  border: 1px solid var(--line);
+  padding: .9em 1em;
+  border: 1px solid var(--card-line);
   text-decoration: none;
 }
-.card:hover { border-color: var(--line-strong); }
+.card:hover { border-color: var(--card-line-hover); background: var(--card-hover-bg); }
 .card-title { font-weight: bold; text-decoration: none; }
 .card-title:hover { text-decoration: underline; }
-.card-meta { margin-top: .2em; color: #606060; font-size: 85%; }
+.card-meta { margin-top: .45em; color: #6f6f6f; font-size: 85%; }
 .card-snippet { margin: .4em 0 0; font-size: 85%; color: #606060; }
 
 /* 标签：等宽小字 + 带色边框 */
-.card-tags { margin-top: .35em; }
+.card-tags { margin-top: .6em; }
 .post-tags { margin-top: .4em; }
 .tag {
   display: inline-block;
@@ -173,6 +180,8 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   padding: 0 .4em;
   margin-right: .45em;
   border: 1px solid var(--tag, #999);
+  /* 支持 color-mix 的浏览器再把标签边框调淡；不支持就退回实色 */
+  border-color: color-mix(in srgb, var(--tag, #999) 62%, transparent);
   border-radius: 2px;
   color: #555;
 }
