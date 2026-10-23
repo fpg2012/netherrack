@@ -172,14 +172,14 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   display: block;
   padding: .8em .9em;
   border: 1px solid var(--card-line);
-  /* 固定色相 + 回复数决定深浅；饱和度压低，避免整页五颜六色 */
-  background-color: hsl(var(--card-hue, 40) 14% calc(97.2% - var(--heat, 0) * 3%));
+  /* 回复数越多底色略深，统一用同一种暖灰，不做随机色相 */
+  background-color: rgba(176, 116, 40, calc(var(--heat, 0) * .10));
   text-decoration: none;
   transition: background-color .15s, border-color .15s;
 }
 .card:hover {
   border-color: var(--card-line-hover);
-  background-color: hsl(var(--card-hue, 40) 14% calc(95.6% - var(--heat, 0) * 3%));
+  background-color: rgba(176, 116, 40, calc(var(--heat, 0) * .10 + .02));
 }
 .card-title { font-weight: bold; color: var(--title); text-decoration: none; }
 .card-title:hover { text-decoration: underline; }
@@ -340,8 +340,8 @@ a.mention:hover { text-decoration: underline; }
     background: color-mix(in srgb, var(--tag, #999) 30%, transparent);
     color: color-mix(in srgb, var(--tag, #999) 38%, #e8e8e8);
   }
-  .card { background-color: hsl(var(--card-hue, 40) 9% calc(14.2% + var(--heat, 0) * 3%)); }
-  .card:hover { background-color: hsl(var(--card-hue, 40) 9% calc(15.8% + var(--heat, 0) * 3%)); }
+  .card { background-color: rgba(230, 160, 60, calc(var(--heat, 0) * .10)); }
+  .card:hover { background-color: rgba(230, 160, 60, calc(var(--heat, 0) * .10 + .03)); }
   .post-head { background: #242424; border-bottom-color: #3a3a3a; }
   .post-head .floor { border-right-color: #3a3a3a; color: #a0a0a0; }
   .post-head .time { color: #a0a0a0; }
