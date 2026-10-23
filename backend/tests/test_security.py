@@ -52,7 +52,7 @@ def test_toml_config_loaded() -> None:
     from app.core.config import Settings
 
     s = Settings(_env_file=None, jwt_secret="x" * 40)
-    assert s.app_name == "soulsand"
+    assert s.app_name == "netherrack"
     assert s.page_size == 20
     # 相对路径按 backend/ 解析成绝对路径
     assert s.assets_dir.is_absolute()

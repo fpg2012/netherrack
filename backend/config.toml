@@ -3,7 +3,7 @@
 # 密钥类（DATABASE_URL、JWT_SECRET）只放 .env，不要写在这里。
 
 # ---- 站点 ----
-app_name = "soulsand"
+app_name = "netherrack"
 # dev | production：production 会强制校验 cookie_secure / cors_origins
 env = "dev"
 # true 时开放 /api/docs 和 /api/openapi.json

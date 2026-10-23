@@ -1,7 +1,10 @@
-# flarum-web
+# netherrack（地狱岩）
 
 论坛重写：**FastAPI + PostgreSQL + React(TS)**。接口只提供 JSON，前端是纯 SPA，
 视觉与只读版 `/workspace/flarum-view` 保持一致。
+
+项目名是 netherrack（地狱岩），站点自己的品牌名仍然是 **soulsand**，
+显示在顶栏和页面标题里。
 
 ```
 backend/    FastAPI + SQLAlchemy 2.0(async) + Alembic
@@ -99,7 +102,7 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
 
 优先级：**环境变量 > `.env` > `config.toml` > `config.py` 里的默认值**。部署时用环境变量临时覆盖任何一项都可以，比如 `COOKIE_SECURE=true`。
 
-`CONFIG_FILE=/etc/flarum-web/config.toml` 可以指向另一份 TOML，方便生产环境把配置放在代码目录外。相对路径（`assets_dir`、`legacy_dump`）按 `backend/` 解析。
+`CONFIG_FILE=/etc/netherrack/config.toml` 可以指向另一份 TOML，方便生产环境把配置放在代码目录外。相对路径（`assets_dir`、`legacy_dump`）按 `backend/` 解析。
 
 改完 `.env` 或 `config.toml` 后需要重启后端（本地 `make backend` 带 `--reload`）。
 

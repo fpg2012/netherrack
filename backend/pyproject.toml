@@ -1,5 +1,5 @@
 [project]
-name = "flarum-api"
+name = "netherrack-api"
 version = "0.1.0"
 description = "soulsand 论坛的 API（FastAPI + PostgreSQL）"
 requires-python = ">=3.11"

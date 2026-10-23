@@ -17,7 +17,7 @@ server {
     ssl_certificate     /etc/letsencrypt/live/forum.example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/forum.example.com/privkey.pem;
 
-    root /srv/flarum-web/frontend/dist;
+    root /srv/netherrack/frontend/dist;
     index index.html;
 
     # ---- 安全头（HTML）----
