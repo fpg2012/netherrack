@@ -4,11 +4,13 @@ import {
   useCollapsePost, useDiscussion, useEditDiscussion, useEditPost, useMe, useMentionable,
   useMeta, useReply, useTags, useTimeline,
 } from '../api/hooks'
+import { ApiError } from '../api/client'
 import { PostCard } from '../components/PostCard'
 import { Dropdown } from '../components/Dropdown'
 import type { MenuItem } from '../components/Dropdown'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import { Sidebar } from '../components/Sidebar'
+import { NotFoundPage } from './NotFoundPage'
 import { datetime, displayName } from '../lib/format'
 import { tagTone } from '../lib/tag'
 import { useDraft } from '../lib/draft'
@@ -40,7 +42,20 @@ export function DiscussionPage() {
   const replyBox = useRef<HTMLTextAreaElement>(null)
 
   if (discussion.isLoading) return <p className="muted">加载中…</p>
-  if (discussion.isError || !discussion.data) return <p>讨论不存在。<Link to="/">返回</Link></p>
+  // 私密讨论对游客按不存在处理（后端同样返回 404），不暴露它是否存在
+  const notFound = (
+    <div className="thread-layout">
+      <div className="thread-main"><NotFoundPage /></div>
+      <aside className="sidebar">
+        <Sidebar tags={allTags.data ?? []} meta={meta.data} />
+      </aside>
+    </div>
+  )
+  if (discussion.isError) {
+    if (discussion.error instanceof ApiError && discussion.error.status === 404) return notFound
+    return <p className="muted">加载失败：{discussion.error.message}</p>
+  }
+  if (!discussion.data) return notFound
   const d = discussion.data
   const isAdmin = me.data?.is_admin ?? false
   const isAuthor = me.data?.id === d.author?.id
