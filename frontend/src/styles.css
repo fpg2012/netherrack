@@ -61,7 +61,6 @@ body {
   h1 { font-size: 1.6em; }
   /* 窄屏贴边会显得局促，只在手机上留一点内边距 */
   .page { padding: 1rem 1rem 2rem; }
-  .site-header { padding-left: 1rem; padding-right: 1rem; }
 }
 p { margin: 1em 0; }
 a, a:visited { color: inherit; }
@@ -137,9 +136,26 @@ a.button {
 }
 a.button:hover { background: #1a1a1a; color: #fdfdfd; }
 
-@media (max-width: 620px) {
-  .site-header { flex-wrap: wrap; gap: .6em 1em; }
-  .site-header .search { order: 3; width: 100%; margin-left: 0; }
+@media (max-width: 640px) {
+  /* 窄屏顶栏：品牌和账号一行，导航一行，搜索一行 */
+  .site-header {
+    flex-wrap: wrap;
+    gap: .55em 1em;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .site-header .brand { order: 1; }
+  .site-header .auth { order: 2; margin-left: auto; }
+  .site-header .nav {
+    order: 3;
+    width: 100%;
+    gap: 1.2em;
+  }
+  .site-header .search {
+    order: 4;
+    width: 100%;
+    margin-left: 0;
+  }
   .site-header .search input { flex: 1; width: auto; }
 }
 
