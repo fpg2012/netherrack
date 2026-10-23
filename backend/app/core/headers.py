@@ -1,7 +1,7 @@
 """统一的安全响应头。
 
 后端只发 JSON 和 /media 文件，所以这里的 CSP 可以很严；HTML 由前端/nginx
-提供，对应的 CSP 写在 README 的部署章节里。
+提供，对应的 CSP 写在 DEPLOY.md 的 nginx 示例里。
 """
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request

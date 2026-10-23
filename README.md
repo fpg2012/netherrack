@@ -25,45 +25,9 @@
 显示在顶栏和页面标题里。
 
 已有的 152 个讨论、520 个帖子从 Flarum 完整迁移过来，包括标签、附件、
-KaTeX 公式、@ 提及和 B 站 / YouTube 视频嵌入。
-
-## 功能
-
-**浏览**
-- 讨论列表、标签筛选、分页；置顶只在标签内生效，避免霸占首页
-- 帖子按楼层分页，操作记录（改名、置顶、锁帖）夹在时间线里显示
-- 中文搜索：jieba 分词 + PostgreSQL 全文检索，`ts_headline` 摘要
-- KaTeX 公式；旧帖里的 YouTube / Bilibili 播放器；超过一屏的代码块和高图自动折叠
-- 附件支持图片 / 音视频 / PDF / 文本 / zip，上限可在配置里改
-
-**写作**
-- Markdown 编辑器，带预览、附件上传、`@` 自动补全（跟随光标、键盘可选）
-- 引用某层楼，或直接「回复某一楼」通知作者
-- 新帖和回复的草稿自动存 localStorage，刷新不丢
-- 单独成段的 B 站 / YouTube 链接自动变成播放器
-
-**账号与通知**
-- 登录、登出（立即吊销 access token）、refresh 轮换、CSRF 双提交
-- `/settings` 改昵称、自我介绍、头像、密码
-- 通知：回复 / 引用 / 最佳回复 / @ 提及 / 系统通知；SSE 即时推送未读数
-- 用户列表与个人主页（讨论 / 回复两个标签页）
-
-**管理**
-- 置顶、锁定、改标签、设为最佳回复
-- 折叠整个讨论或单个楼层（折叠的讨论强制不公开、不进列表；折叠楼层显示占位）
-- 设为公开 / 转为私密（管理员和楼主）
-- 发送系统通知、审计日志
-
-## 技术栈
-
-| 层 | 选型 |
-|---|---|
-| 后端 | FastAPI · SQLAlchemy 2.0 (async) · Alembic · asyncpg |
-| 数据库 | PostgreSQL 16（`tsvector` 生成列 + GIN 索引） |
-| 前端 | Vite · React 18 · TypeScript · TanStack Query |
-| 鉴权 | JWT（HttpOnly cookie）+ refresh 轮换 + CSRF 双提交 |
-| 清洗 | nh3（标签/属性白名单）、KaTeX、markdown-it |
-| 限流 | slowapi（默认按进程内存） |
+KaTeX 公式、@ 提及和 B 站 / YouTube 视频嵌入。日常使用覆盖：讨论列表与标签筛选、
+Markdown 发帖与引用、楼层级回复、中文全文搜索、站内通知（SSE 推送）、
+内容折叠与审计日志。
 
 ## 快速开始
 
@@ -98,82 +62,7 @@ make mentions    # 清理旧数据里的 @"name"#p123
 make reindex     # 重建搜索分词
 ```
 
-## 配置
+更多文档：
 
-配置分两层，优先级 **环境变量 > `.env` > `config.toml` > 代码默认值**：
-
-| 文件 | 内容 |
-|---|---|
-| `backend/config.toml` | 非敏感项：站点名、env/debug、token 有效期、cookie 策略、CORS、分页、上传上限、路径 |
-| `backend/.env` | 只放密钥：`DATABASE_URL`、`JWT_SECRET`，可选 `CONFIG_FILE` |
-
-`ENV=production` 时后端会强制校验：`COOKIE_SECURE=true`、CORS 不含 localhost、
-`JWT_SECRET` 不是默认值，任一不满足直接启动失败。
-
-相对路径（`assets_dir`、`legacy_dump`）按 `backend/` 解析；改完配置需要重启后端。
-
-## 目录结构
-
-```
-backend/
-  app/
-    api/routes/      # discussions / posts / users / notifications / stream / uploads …
-    models/          # SQLAlchemy 模型
-    services/        # s9e 解析、内容清洗、搜索、提及、通知、审计、SSE 事件总线
-    core/            # 配置、鉴权、限流、安全响应头
-    importers/       # Flarum 导入
-  config.toml        # 非敏感配置
-  migrations/        # Alembic
-  scripts/           # devdb、重建分词、修复旧提及、恢复嵌入
-  tests/             # 单元测试 + API 集成测试
-frontend/
-  src/
-    pages/           # 首页 / 讨论 / 搜索 / 用户 / 通知 / 设置
-    components/      # 编辑器、楼层、下拉、Toast、折叠 …
-    api/             # 请求封装与 TanStack Query hooks
-    lib/             # 草稿、KaTeX、格式化
-deploy/
-  nginx.conf.example # 反代 + 安全头 + SSE 配置
-data/                # Flarum dump 与附件（不进 git）
-```
-
-## 部署
-
-`deploy/nginx.conf.example` 是完整的反代示例，包含：
-
-- HTML 的 CSP、HSTS、`X-Frame-Options` 等安全头（API 和 `/media` 由后端负责）
-- `/api/v1/stream` 的 SSE 长连接配置（关缓冲、放宽读超时）
-- `X-Forwarded-For` + 后端 `TRUST_PROXY=true`，限流按真实 IP 计数
-
-后端建议用 systemd 或 supervisor 托管，保持**单 worker**（原因见下）。
-
-### 多 worker 的坑
-
-有两处状态在进程内存里，加 `--workers N` 会静默失效：
-
-| 组件 | 表现 | 修法 |
-|---|---|---|
-| 限流 | 额度变成 N 倍，防爆破失效 | `Limiter(storage_uri="redis://…")` |
-| SSE 事件总线 | 用户连在 A、通知产生在 B，收不到推送（退化为 2 分钟轮询） | Postgres `LISTEN/NOTIFY` 或 Redis pub/sub |
-
-数据库、会话、通知已读状态、审计日志都在 PostgreSQL 里，多 worker 天然一致。
-
-## 测试
-
-```bash
-make test     # cd backend && uv run pytest
-```
-
-集成测试用真实 PostgreSQL（复用 `DATABASE_URL`），每个用例包在外层事务里、
-结束整体回滚，不会动开发库的数据，所以跑之前数据库要在运行。
-
-## 已知限制
-
-- 迁移过来的旧帖只读：Flarum 存的是 s9e XML，没有 Markdown 原文，编辑会覆盖排版
-- 「私密」只是对游客隐藏，登录用户之间互相可见
-- 新用户只能通过导入产生，没有注册、邮箱验证、找回密码
-- 视频嵌入按域名白名单（YouTube / Bilibili），会在页面加载时请求第三方
-
-## 许可证
-
-仓库目前为私有，尚未附许可证。转为公开前需要选定（如 MIT 或 AGPL-3.0）。
+- 配置项、部署、多 worker 注意事项：[DEPLOY.md](DEPLOY.md)
+- 代码结构、开发约定、测试、已知限制：[CONTRIBUTING.md](CONTRIBUTING.md)

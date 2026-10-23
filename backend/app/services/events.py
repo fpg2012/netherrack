@@ -2,7 +2,7 @@
 
 只推失效信号，不推内容——前端收到后照旧调接口拉未读数/列表。
 单进程够用；多 worker 时每个进程只知道自己的连接，需要换成
-Postgres LISTEN/NOTIFY 或 Redis 才能跨进程广播（见 README）。
+Postgres LISTEN/NOTIFY 或 Redis 才能跨进程广播（见 DEPLOY.md）。
 """
 import asyncio
 import contextlib
