@@ -66,6 +66,9 @@ export function SidebarHeader() {
             <Link to="/settings">设置</Link>
             {me.data.is_admin && <Link to="/invites">邀请码</Link>}
             {me.data.is_admin && <Link to="/notifications?send=1">系统通知</Link>}
+          </div>
+
+          <div className="side-logout">
             <button type="button" disabled={logout.isPending} onClick={() => logout.mutate()}>
               退出登录
             </button>
