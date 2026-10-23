@@ -21,6 +21,8 @@ export function NetherrackEgg() {
   useEffect(() => {
     let clicks = 0
     let lastClick = 0
+    let lastCellX = -1
+    let lastCellY = -1
     let lastHole = 0
     let nextId = 1
     const onClick = (e: MouseEvent) => {
@@ -28,17 +30,23 @@ export function NetherrackEgg() {
       const el = e.target as HTMLElement | null
       if (!el || el.closest(BLOCKED)) return
       const now = performance.now()
-      // 超过 300ms 没点，连击计数从头开始
-      if (now - lastClick > 300) clicks = 0
+      // 对齐到 72px 网格，取点击位置所在格的左上角
+      const cellX = Math.floor(e.pageX / 72)
+      const cellY = Math.floor(e.pageY / 72)
+      // 超过 300ms 没点、或者换了一个格子，连击计数都从头开始
+      if (now - lastClick > 300 || cellX !== lastCellX || cellY !== lastCellY) {
+        clicks = 0
+      }
       lastClick = now
+      lastCellX = cellX
+      lastCellY = cellY
       clicks += 1
-      // 前 5 次点击只当作挖矿前的试探，不会出东西
+      // 同一个格子前 5 次点击只当作挖矿前的试探，不会出东西
       if (clicks < 5) return
       if (Math.random() > 0.22) return
       if (now - lastHole < 120) return
-      // 对齐到 72px 网格，取点击位置所在格的左上角
-      const x = Math.floor(e.pageX / 72) * 72
-      const y = Math.floor(e.pageY / 72) * 72
+      const x = cellX * 72
+      const y = cellY * 72
       // 整格必须都在空白处，避免压到卡片或正文
       const vx = x - window.scrollX
       const vy = y - window.scrollY
