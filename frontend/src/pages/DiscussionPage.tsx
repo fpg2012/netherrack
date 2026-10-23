@@ -2,12 +2,13 @@ import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   useCollapsePost, useDiscussion, useEditDiscussion, useEditPost, useMe, useMentionable,
-  useReply, useTags, useTimeline,
+  useMeta, useReply, useTags, useTimeline,
 } from '../api/hooks'
 import { PostCard } from '../components/PostCard'
 import { Dropdown } from '../components/Dropdown'
 import type { MenuItem } from '../components/Dropdown'
 import { MarkdownEditor } from '../components/MarkdownEditor'
+import { Sidebar } from '../components/Sidebar'
 import { datetime, displayName } from '../lib/format'
 import { useDraft } from '../lib/draft'
 import type { Post } from '../types'
@@ -20,6 +21,7 @@ export function DiscussionPage() {
   const timeline = useTimeline(discussionId, page)
   const me = useMe()
   const allTags = useTags()
+  const meta = useMeta()
 
   const reply = useReply(discussionId)
   const editPost = useEditPost(discussionId)
@@ -61,7 +63,8 @@ export function DiscussionPage() {
   }
 
   return (
-    <>
+    <div className="thread-layout">
+      <div className="thread-main">
       {titleEditor ? (
         <div className="title-editor">
           <input
@@ -278,6 +281,15 @@ export function DiscussionPage() {
           </p>
         </div>
       )}
-    </>
+      </div>
+
+      <aside className="sidebar">
+        <Sidebar
+          tags={allTags.data ?? []}
+          total={meta.data?.discussions ?? 0}
+          meta={meta.data}
+        />
+      </aside>
+    </div>
   )
 }

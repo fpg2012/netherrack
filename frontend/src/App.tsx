@@ -20,7 +20,7 @@ import { SettingsPage } from './pages/SettingsPage'
 export function App() {
   const meta = useMeta()
   const { pathname } = useLocation()
-  const wide = pathname === '/'
+  const wide = pathname === '/' || pathname.startsWith('/d/')
   useEffect(() => { setSiteTimezone(meta.data?.timezone) }, [meta.data?.timezone])
 
   return (

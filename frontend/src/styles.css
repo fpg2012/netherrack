@@ -1285,6 +1285,7 @@ button.linkish:hover { color: inherit; }
   }
   /* 宽屏首页不要顶栏，导航都在侧栏里 */
   .shell.wide .site-header { display: none; }
+  .shell.wide .site-footer { display: none; }
   .shell.wide .page { padding-top: 2.2rem; }
 }
 
@@ -1415,4 +1416,42 @@ button.linkish:hover { color: inherit; }
   .side-nav .side-search input,
   .side-nav .side-search button { background: #242424; border-color: #3a3a3a; }
   .side-nav .side-search button:hover { background: #2e2e2e; }
+}
+
+/* 侧栏页脚 */
+.side-footer {
+  display: flex;
+  align-items: center;
+  gap: .45em;
+  margin-top: 2em;
+  padding-top: 1em;
+  border-top: 1px solid var(--line);
+  font-family: Menlo, Consolas, monospace;
+  font-size: 72%;
+  color: #999;
+}
+.side-footer img {
+  display: block;
+  border-radius: 1px;
+  image-rendering: pixelated;
+  opacity: .85;
+}
+.side-footer a { color: inherit; text-decoration: none; }
+.side-footer a:hover { color: #1a1a1a; text-decoration: underline; }
+
+@media (prefers-color-scheme: dark) {
+  .side-footer { color: #7a7a7a; }
+  .side-footer a:hover { color: #d8d8d8; }
+}
+
+/* 帖子页宽屏布局：正文保持阅读宽度，右侧放同样的侧栏 */
+.thread-layout { display: block; }
+@media (min-width: 1100px) {
+  .thread-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 48rem) 15rem;
+    gap: 2.4rem;
+    justify-content: center;
+    align-items: start;
+  }
 }

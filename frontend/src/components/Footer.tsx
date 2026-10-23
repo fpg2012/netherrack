@@ -1,6 +1,7 @@
-export function Footer() {
+export function Footer({ variant = 'bottom' }: { variant?: 'bottom' | 'side' }) {
+  const className = variant === 'side' ? 'side-footer' : 'site-footer'
   return (
-    <footer className="site-footer">
+    <footer className={className}>
       <img src="/netherrack.svg" alt="" width={16} height={16} />
       <span>
         Powered by{' '}
