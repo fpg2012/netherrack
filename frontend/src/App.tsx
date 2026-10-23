@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { ToastHost } from './components/Toast'
 import { IndexPage } from './pages/IndexPage'
@@ -30,6 +31,7 @@ export function App() {
           <Route path="*" element={<p>页面不存在。</p>} />
         </Routes>
       </main>
+      <Footer />
     </>
   )
 }
