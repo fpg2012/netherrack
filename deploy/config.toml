@@ -1,0 +1,26 @@
+# 服务器上的运行配置（CONFIG_FILE 指向这里）。
+# nginx + Cloudflare 已接好，按生产模式运行。
+
+app_name = "netherrack"
+# 展示用时区（数据库统一存 UTC）
+timezone = "Asia/Shanghai"
+env = "production"
+debug = false
+
+access_token_ttl = 900
+refresh_token_ttl = 604800
+cookie_secure = true
+cookie_samesite = "lax"
+
+cors_origins = ["https://forum.soulsand.top"]
+# 前面有 Cloudflare + nginx，限流按 X-Forwarded-For 里的客户端 IP 计数
+trust_proxy = true
+
+upload_max_bytes = 5242880
+avatar_max_bytes = 2097152
+
+page_size = 20
+max_page_size = 100
+
+assets_dir = "/data/assets"
+legacy_dump = "/data/legacy/flarum.sql.gz"

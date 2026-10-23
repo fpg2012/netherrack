@@ -1,0 +1,38 @@
+# 生产/预发部署：仅 db + api，前端静态文件由宿主机 nginx 提供。
+# 用法（在 deploy/ 目录）：docker-compose -f docker-compose.prod.yml up -d --build
+version: "2.4"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: ../backend/.env
+    environment:
+      POSTGRES_USER: flarum
+      POSTGRES_DB: flarum
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flarum -d flarum"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ../backend
+    restart: unless-stopped
+    env_file: ../backend/.env
+    environment:
+      CONFIG_FILE: /config/config.toml
+    user: "1000:1000"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ../data/assets:/data/assets
+      - ../config.toml:/config/config.toml:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
