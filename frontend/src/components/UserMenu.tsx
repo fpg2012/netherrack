@@ -4,6 +4,7 @@ import { useCheckIn, useDoCheckIn, useLogout, useMe } from '../api/hooks'
 import { Avatar } from './Avatar'
 import { toast } from './Toast'
 import { checkInGreeting } from '../lib/checkin'
+import { netherrackBurst } from '../lib/burst'
 
 export function UserMenu() {
   const me = useMe()
@@ -66,10 +67,16 @@ export function UserMenu() {
             type="button"
             role="menuitem"
             disabled={!checkin.data || checkin.data.checked_in_today || doCheckIn.isPending}
-            onClick={() => {
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              const x = e.clientX || rect.left + rect.width / 2
+              const y = e.clientY || rect.top + rect.height / 2
               setOpen(false)
               doCheckIn.mutate(undefined, {
-                onSuccess: () => toast(checkInGreeting(name)),
+                onSuccess: () => {
+                  netherrackBurst(x, y)
+                  toast(checkInGreeting(name))
+                },
                 onError: (err) => toast(err instanceof Error ? err.message : '签到失败'),
               })
             }}

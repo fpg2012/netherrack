@@ -1502,16 +1502,48 @@ button.linkish:hover { color: inherit; }
 }
 .checkin-days { font-size: 74%; color: #6f6f6f; white-space: nowrap; }
 .checkin-btn {
+  position: relative;
   flex: 0 0 auto;
+  overflow: hidden;
+  min-width: 4.8em;
   padding: .12em .65em;
   border-color: var(--line-strong);
+  background: #fff;
   font-size: 80%;
 }
+.checkin-btn > span { position: relative; z-index: 1; }
 .checkin-btn:hover:not(:disabled) { border-color: #1a1a1a; }
+/* 2 秒从左往右填满地狱岩红，文字在填到一半时切成白色 */
+.checkin-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 0;
+  background: #b8614f;
+}
+.checkin-btn.filling::before { animation: checkin-fill 2s linear forwards; }
+.checkin-btn.filling,
+.checkin-btn.filling:disabled {
+  border-color: #b8614f;
+  opacity: 1;
+  cursor: default;
+}
+.checkin-btn.done,
+.checkin-btn.done:disabled {
+  border-color: #6e2b24;
+  background: #6e2b24;
+  color: #fff;
+  opacity: 1;
+}
+@keyframes checkin-fill {
+  to { width: 100%; }
+}
 @media (prefers-color-scheme: dark) {
   .checkin-days { color: #9a9a9a; }
-  .checkin-btn { border-color: #4d4d4d; }
+  .checkin-btn { border-color: #4d4d4d; background: #1f1f1f; }
   .checkin-btn:hover:not(:disabled) { border-color: #d8d8d8; }
+  .checkin-btn.done, .checkin-btn.done:disabled { border-color: #8f4a3e; background: #8f4a3e; }
 }
 
 /* 侧栏页脚 */
@@ -1581,4 +1613,30 @@ button.linkish:hover { color: inherit; }
 @keyframes netherrack-dig {
   from { transform: scale(.3); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+
+/* 签到成功的地狱岩像素礼花 */
+.netherrack-burst {
+  position: fixed;
+  z-index: 120;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.netherrack-burst i {
+  position: absolute;
+  display: block;
+  animation: netherrack-burst .9s cubic-bezier(.2, .7, .4, 1) forwards;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+}
+@keyframes netherrack-burst {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  65% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 34px))
+      scale(.2) rotate(var(--rot));
+  }
 }
