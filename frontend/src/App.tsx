@@ -18,6 +18,7 @@ import { UsersPage } from './pages/UsersPage'
 import { UserPage } from './pages/UserPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 
 export function App() {
   const meta = useMeta()
@@ -76,7 +77,7 @@ export function App() {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/invites" element={<InvitesPage />} />
-            <Route path="*" element={<p>页面不存在。</p>} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
       </main>

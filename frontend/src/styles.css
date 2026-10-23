@@ -1654,3 +1654,31 @@ button.linkish:hover { color: inherit; }
       scale(.2) rotate(var(--rot));
   }
 }
+
+
+/* 404：数字内部填上地狱岩纹理 */
+.notfound { padding: 4rem 0 6rem; }
+.notfound-code {
+  margin: 0;
+  font-family: Menlo, Consolas, monospace;
+  font-size: clamp(5.5rem, 16vw, 9rem);
+  font-weight: 700;
+  line-height: .85;
+  letter-spacing: -.04em;
+  color: transparent;
+  background: url('/netherrack-block.svg') repeat;
+  background-size: 72px 72px;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.notfound-text {
+  margin: 1.4em 0 .4em;
+  font-size: 1.15em;
+  font-weight: 600;
+}
+.notfound .button { margin-top: 1.4em; }
+
+@media (prefers-color-scheme: dark) {
+  .notfound-code { filter: brightness(1.45) saturate(1.1); }
+}
