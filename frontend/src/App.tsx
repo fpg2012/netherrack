@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { ToastHost } from './components/Toast'
@@ -19,10 +19,12 @@ import { SettingsPage } from './pages/SettingsPage'
 
 export function App() {
   const meta = useMeta()
+  const { pathname } = useLocation()
+  const wide = pathname === '/'
   useEffect(() => { setSiteTimezone(meta.data?.timezone) }, [meta.data?.timezone])
 
   return (
-    <>
+    <div className={wide ? 'shell wide' : 'shell'}>
       <Header />
       <ToastHost />
       <main className="page">
@@ -42,6 +44,6 @@ export function App() {
         </Routes>
       </main>
       <Footer />
-    </>
+    </div>
   )
 }

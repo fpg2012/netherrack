@@ -26,27 +26,51 @@ export function IndexPage() {
         {loading ? '加载中…' : `共 ${discussions.data?.total ?? 0} 个讨论`}
       </p>
 
-      <TagBar
-        tags={tags.data ?? []}
-        total={meta.data?.discussions ?? 0}
-        active={tag}
-      />
+      <div className="index-layout">
+        <div className="index-main">
+          <TagBar
+            tags={tags.data ?? []}
+            total={meta.data?.discussions ?? 0}
+            active={tag}
+          />
 
-      <div className="grid">
-        {discussions.data?.items.map((d) => <DiscussionCard key={d.id} d={d} />)}
+          <div className="grid">
+            {discussions.data?.items.map((d) => <DiscussionCard key={d.id} d={d} />)}
+          </div>
+
+          {!loading && discussions.data?.total === 0 && (
+            <p className="muted">这里还没有公开的讨论。</p>
+          )}
+          {discussions.isError && (
+            <p className="muted">加载失败：{String(discussions.error)}</p>
+          )}
+
+          <p className="pager">
+            {page > 1 && <a href="#" onClick={(e) => { e.preventDefault(); go(page - 1) }}>← 上一页</a>}
+            <span>{page} / {discussions.data?.pages ?? 1}</span>
+            {page < (discussions.data?.pages ?? 1) && (
+              <a href="#" onClick={(e) => { e.preventDefault(); go(page + 1) }}>下一页 →</a>
+            )}
+          </p>
+        </div>
+
+        <aside className="sidebar">
+          <h2>标签</h2>
+          <TagBar
+            tags={tags.data ?? []}
+            total={meta.data?.discussions ?? 0}
+            active={tag}
+            variant="sidebar"
+          />
+
+          <h2>站点</h2>
+          <dl className="site-stats">
+            <div><dt>讨论</dt><dd>{meta.data?.discussions ?? 0}</dd></div>
+            <div><dt>帖子</dt><dd>{meta.data?.posts ?? 0}</dd></div>
+            <div><dt>成员</dt><dd>{meta.data?.users ?? 0}</dd></div>
+          </dl>
+        </aside>
       </div>
-      {!loading && discussions.data?.total === 0 && (
-        <p className="muted">这里还没有公开的讨论。</p>
-      )}
-      {discussions.isError && <p className="muted">加载失败：{String(discussions.error)}</p>}
-
-      <p className="pager">
-        {page > 1 && <a href="#" onClick={(e) => { e.preventDefault(); go(page - 1) }}>← 上一页</a>}
-        <span>{page} / {discussions.data?.pages ?? 1}</span>
-        {page < (discussions.data?.pages ?? 1) && (
-          <a href="#" onClick={(e) => { e.preventDefault(); go(page + 1) }}>下一页 →</a>
-        )}
-      </p>
     </>
   )
 }
