@@ -1039,3 +1039,128 @@ pre.is-folded {
   .site-footer { color: #7a7a7a; }
   .site-footer a:hover { color: #d8d8d8; }
 }
+
+/* 邀请码 */
+.invite-code {
+  display: flex;
+  align-items: center;
+  gap: .8em;
+  flex-wrap: wrap;
+  margin: 1em 0;
+  padding: .7em .9em;
+  border: 1px solid var(--line-strong);
+}
+.invite-code code {
+  font-size: 1.05em;
+  letter-spacing: .06em;
+  overflow-wrap: anywhere;
+}
+
+/* 表格（用户、邀请码） */
+.table-wrap { overflow-x: auto; }
+.tbl {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  font-size: 92%;
+}
+.tbl th {
+  padding: .4em .6em;
+  border-bottom: 1px solid var(--line-strong);
+  font-family: Menlo, Consolas, monospace;
+  font-size: 72%;
+  font-weight: normal;
+  letter-spacing: .06em;
+  text-align: left;
+  white-space: nowrap;
+  color: #606060;
+}
+.tbl td {
+  padding: .55em .6em;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.tbl tbody tr:hover { background: rgba(0, 0, 0, .018); }
+.tbl .num { text-align: right; }
+.tbl .nowrap { white-space: nowrap; }
+.tbl .empty { padding: 1.4em .6em; text-align: center; color: #999; }
+.tbl .actions { text-align: right; white-space: nowrap; }
+.tbl code { font-family: Menlo, Consolas, monospace; font-size: 88%; }
+
+/* 邀请码 */
+.invite-panel {
+  margin: 1.2em 0;
+  padding: .9em 1em;
+  border: 1px solid var(--line);
+}
+.invite-panel h2,
+.invite-created h2 {
+  margin: 0 0 .6em;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 72%;
+  font-weight: normal;
+  letter-spacing: .06em;
+  color: #606060;
+}
+.invite-created {
+  margin: 1.2em 0;
+  padding: .9em 1em;
+  border: 1px solid var(--line-strong);
+}
+.invite-created .code-row {
+  display: flex;
+  align-items: center;
+  gap: .8em;
+  flex-wrap: wrap;
+}
+.invite-created code {
+  font-family: Menlo, Consolas, monospace;
+  font-size: 1.15em;
+  letter-spacing: .08em;
+  overflow-wrap: anywhere;
+}
+.invite-created p { margin: .5em 0 0; font-size: 85%; }
+.invite-list-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1em;
+  margin-top: 1.8em;
+}
+.invite-list-head .label {
+  font-family: Menlo, Consolas, monospace;
+  font-size: 75%;
+  letter-spacing: .06em;
+}
+.invite-list-head .muted { font-size: 85%; }
+
+.status {
+  font-family: Menlo, Consolas, monospace;
+  font-size: 72%;
+  padding: 0 .4em;
+  border: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+.status-active { border-color: #1a1a1a; font-weight: bold; }
+.status-muted { color: #808080; }
+.status-void { color: #999; text-decoration: line-through; }
+
+button.linkish {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #808080;
+  font: inherit;
+  font-size: 85%;
+  text-decoration: underline;
+  cursor: pointer;
+}
+button.linkish:hover { color: inherit; }
+
+@media (prefers-color-scheme: dark) {
+  .tbl tbody tr:hover { background: rgba(255, 255, 255, .03); }
+  .status-active { border-color: #d8d8d8; }
+  .tbl th, .invite-panel h2, .invite-created h2 { color: #a0a0a0; }
+  .invite-panel { border-color: #3a3a3a; }
+  .invite-created { border-color: #4d4d4d; }
+}

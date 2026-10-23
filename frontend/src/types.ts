@@ -127,3 +127,23 @@ export interface UserPost {
   created_at: string
   snippet: string
 }
+
+export interface Invite {
+  id: number
+  hint: string
+  note: string | null
+  status: 'active' | 'used' | 'expired' | 'revoked'
+  created_at: string
+  expires_at: string | null
+  used_at: string | null
+  used_by: string | null
+  created_by: string | null
+  revoked_at: string | null
+}
+
+export interface InviteCreated {
+  id: number
+  code: string
+  expires_at: string | null
+  note: string | null
+}

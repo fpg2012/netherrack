@@ -8,7 +8,9 @@ import { setSiteTimezone } from './lib/format'
 import { IndexPage } from './pages/IndexPage'
 import { DiscussionPage } from './pages/DiscussionPage'
 import { SearchPage } from './pages/SearchPage'
+import { InvitesPage } from './pages/InvitesPage'
 import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
 import { NewDiscussionPage } from './pages/NewDiscussionPage'
 import { UsersPage } from './pages/UsersPage'
 import { UserPage } from './pages/UserPage'
@@ -29,6 +31,8 @@ export function App() {
         <Route path="/d/:id" element={<DiscussionPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/invites" element={<InvitesPage />} />
         <Route path="/new" element={<NewDiscussionPage />} />
         <Route path="/users" element={<UsersPage />} />
           <Route path="/u/:id" element={<UserPage />} />

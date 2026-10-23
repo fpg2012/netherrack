@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 
@@ -38,6 +38,7 @@ export function LoginPage() {
         {error && <p className="event">{error}</p>}
         <p><button type="submit" disabled={busy}>{busy ? '登录中…' : '登录'}</button></p>
       </form>
+      <p className="muted">没有账号？<Link to="/register">用邀请码注册</Link></p>
     </>
   )
 }

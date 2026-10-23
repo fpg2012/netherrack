@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type {
-  DiscussionBrief, DiscussionDetail, Me, Notification, Page, Post, SearchHit, TagWithCount,
+  DiscussionBrief, DiscussionDetail, Invite, InviteCreated, Me, Notification, Page, Post,
+  SearchHit, TagWithCount,
   TimelineItem, UserBrief, UserListItem, UserPost, UserProfile,
 } from '../types'
 
@@ -278,5 +279,29 @@ export function useChangePassword() {
   return useMutation({
     mutationFn: (body: { current_password: string; new_password: string }) =>
       api.post<void>('/users/me/password', body),
+  })
+}
+
+export function useInvites() {
+  return useQuery({
+    queryKey: ['invites'],
+    queryFn: () => api.get<Invite[]>('/invites'),
+  })
+}
+
+export function useCreateInvite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { expires_in_days: number; note?: string }) =>
+      api.post<InviteCreated>('/invites', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['invites'] }),
+  })
+}
+
+export function useRevokeInvite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.del<void>(`/invites/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['invites'] }),
   })
 }

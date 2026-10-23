@@ -13,3 +13,6 @@ frontend/dist/
 
 # 数据（含用户邮箱与密码哈希）
 data/
+
+# TypeScript 增量构建缓存
+frontend/tsconfig.tsbuildinfo

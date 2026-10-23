@@ -4,6 +4,7 @@ from app.api.routes import (
     auth,
     discussions,
     editor,
+    invites,
     meta,
     notifications,
     posts,
@@ -16,6 +17,7 @@ from app.api.routes import (
 
 api = APIRouter(prefix="/api/v1")
 api.include_router(auth.router)
+api.include_router(invites.router)
 api.include_router(discussions.router)
 api.include_router(posts.router)
 api.include_router(editor.router)

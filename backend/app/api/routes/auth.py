@@ -2,7 +2,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, or_, select
+from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import CurrentUser, SessionDep, verify_csrf
 from app.core.config import settings
@@ -15,8 +16,10 @@ from app.core.security import (
     new_csrf_token,
     verify_password,
 )
-from app.models import RefreshToken, RevokedToken, User
-from app.schemas.auth import LoginIn, LoginOut, UserOut
+from app.models import Invite, RefreshToken, RevokedToken, User
+from app.schemas.auth import LoginIn, LoginOut, RegisterIn, UserOut
+from app.services.audit import audit
+from app.services.invites import CODE_LEN, hash_code, normalize
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -62,6 +65,56 @@ async def login(payload: LoginIn, request: Request, response: Response,
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "用户名或密码错误")
     if needs_rehash:                      # bcrypt -> argon2
         user.password_hash = hash_password(payload.password)
+    csrf = await _issue(session, user, response, request.headers.get("user-agent"))
+    return LoginOut(user=UserOut.model_validate(user), csrf_token=csrf)
+
+
+@router.post("/register", response_model=LoginOut, status_code=201)
+@limiter.limit("10/minute")
+async def register(payload: RegisterIn, request: Request, response: Response,
+                   session: SessionDep) -> LoginOut:
+    """凭邀请码注册。邀请码一次性使用，整个流程在同一个事务里完成。"""
+    code = normalize(payload.code)
+    # 长度不对就不查库，也避免异常输入进入日志
+    if len(code) != CODE_LEN:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "邀请码无效或已失效")
+    invite = await session.scalar(
+        select(Invite).where(Invite.code_hash == hash_code(code)).with_for_update()
+    )
+    now = datetime.now(UTC)
+    if (invite is None or invite.used_at is not None or invite.revoked_at is not None
+            or (invite.expires_at is not None and invite.expires_at < now)):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "邀请码无效或已失效")
+
+    taken = await session.scalar(
+        select(User.id).where(or_(
+            func.lower(User.username) == payload.username.lower(),
+            func.lower(User.email) == payload.email,
+        ))
+    )
+    if taken is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "用户名或邮箱已被使用")
+
+    user = User(
+        username=payload.username,
+        email=payload.email,
+        password_hash=hash_password(payload.password),
+        nickname=payload.nickname,
+        is_active=True,
+        is_admin=False,
+    )
+    session.add(user)
+    await session.flush()
+    invite.used_by = user.id
+    invite.used_at = now
+    await audit(session, actor_id=user.id, action="user.register",
+                target_type="user", target_id=user.id, invite_id=invite.id)
+    try:
+        await session.commit()
+    except IntegrityError:                # 并发下唯一约束兜底
+        await session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, "用户名或邮箱已被使用") from None
+
     csrf = await _issue(session, user, response, request.headers.get("user-agent"))
     return LoginOut(user=UserOut.model_validate(user), csrf_token=csrf)
 
