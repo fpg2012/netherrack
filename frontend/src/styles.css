@@ -214,6 +214,9 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   line-height: 1.35;
 }
 .post-head .author { font-weight: bold; }
+/* 用户名是链接，但默认下划线太抢眼，悬停时再出现 */
+.post-head .author a { text-decoration: none; }
+.post-head .author a:hover { text-decoration: underline; }
 .post-head .time { color: #666; font-size: 80%; }
 .post-body { padding: .2em .9em 0; }
 .edited {
@@ -1086,6 +1089,8 @@ pre.is-folded {
 .tbl .empty { padding: 1.4em .6em; text-align: center; color: #999; }
 .tbl .actions { text-align: right; white-space: nowrap; }
 .tbl code { font-family: Menlo, Consolas, monospace; font-size: 88%; }
+.tbl .user-cell a { text-decoration: none; }
+.tbl .user-cell a:hover { text-decoration: underline; }
 
 /* 邀请码 */
 .invite-panel {
