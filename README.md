@@ -1,165 +1,179 @@
-<p>
-  <img src="docs/netherrack.svg" width="56" height="56" alt="netherrack">
+<p align="center">
+  <img src="docs/netherrack.svg" width="72" height="72" alt="netherrack">
 </p>
 
-# netherrack（地狱岩）
+<h1 align="center">netherrack</h1>
 
-论坛重写：**FastAPI + PostgreSQL + React(TS)**。接口只提供 JSON，前端是纯 SPA，
-视觉与只读版 `/workspace/flarum-view` 保持一致。
+<p align="center">
+  从 Flarum 迁移而来的轻量论坛 —— FastAPI + PostgreSQL + React
+</p>
 
-项目名是 netherrack（地狱岩），站点自己的品牌名仍然是 **soulsand**，
+<p align="center">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.160-009688?style=flat-square&logo=fastapi&logoColor=white">
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white">
+  <img alt="React" src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white">
+</p>
+
+## 简介
+
+一个自己用的论坛，用来替换跑了五年的 Flarum。后端只输出 JSON，前端是纯 SPA，
+界面刻意保持极简：单色、1px 边框、等宽小标签。
+
+项目名 **netherrack**（地狱岩），站点本身的品牌名是 **soulsand**，
 显示在顶栏和页面标题里。
 
-```
-backend/    FastAPI + SQLAlchemy 2.0(async) + Alembic
-frontend/   Vite + React 18 + TypeScript + TanStack Query
-data/       从 Flarum 导出的 dump 与附件（不进 git）
-```
+已有的 152 个讨论、520 个帖子从 Flarum 完整迁移过来，包括标签、附件、
+KaTeX 公式、@ 提及和 B 站 / YouTube 视频嵌入。
 
-## 本地起服务
+## 功能
+
+**浏览**
+- 讨论列表、标签筛选、分页；置顶只在标签内生效，避免霸占首页
+- 帖子按楼层分页，操作记录（改名、置顶、锁帖）夹在时间线里显示
+- 中文搜索：jieba 分词 + PostgreSQL 全文检索，`ts_headline` 摘要
+- KaTeX 公式；旧帖里的 YouTube / Bilibili 播放器；超过一屏的代码块和高图自动折叠
+- 附件支持图片 / 音视频 / PDF / 文本 / zip，上限可在配置里改
+
+**写作**
+- Markdown 编辑器，带预览、附件上传、`@` 自动补全（跟随光标、键盘可选）
+- 引用某层楼，或直接「回复某一楼」通知作者
+- 新帖和回复的草稿自动存 localStorage，刷新不丢
+- 单独成段的 B 站 / YouTube 链接自动变成播放器
+
+**账号与通知**
+- 登录、登出（立即吊销 access token）、refresh 轮换、CSRF 双提交
+- `/settings` 改昵称、自我介绍、头像、密码
+- 通知：回复 / 引用 / 最佳回复 / @ 提及 / 系统通知；SSE 即时推送未读数
+- 用户列表与个人主页（讨论 / 回复两个标签页）
+
+**管理**
+- 置顶、锁定、改标签、设为最佳回复
+- 折叠整个讨论或单个楼层（折叠的讨论强制不公开、不进列表；折叠楼层显示占位）
+- 设为公开 / 转为私密（管理员和楼主）
+- 发送系统通知、审计日志
+
+## 技术栈
+
+| 层 | 选型 |
+|---|---|
+| 后端 | FastAPI · SQLAlchemy 2.0 (async) · Alembic · asyncpg |
+| 数据库 | PostgreSQL 16（`tsvector` 生成列 + GIN 索引） |
+| 前端 | Vite · React 18 · TypeScript · TanStack Query |
+| 鉴权 | JWT（HttpOnly cookie）+ refresh 轮换 + CSRF 双提交 |
+| 清洗 | nh3（标签/属性白名单）、KaTeX、markdown-it |
+| 限流 | slowapi（默认按进程内存） |
+
+## 快速开始
+
+需要 Python 3.12+、Node 20+、PostgreSQL 14+（或已安装的 docker / podman）。
 
 ```bash
-# 1. 数据库：docker → podman → 本地 pgserver 自动回退
+git clone git@github.com:fpg2012/netherrack.git
+cd netherrack
+
+# 1. 后端依赖与配置
+cp backend/.env.example backend/.env
+python3 -c "import secrets; print(secrets.token_hex(32))"   # 填进 .env 的 JWT_SECRET
+
+make install
+
+# 2. 数据库（docker → podman → 本地 pgserver 自动回退）
 make db
-#    网络受限、拉不了镜像时，直接用本地二进制（无需 root、无需镜像）：
-#    make devdb
+make migrate
 
-# 2. 后端
-cd backend && cp .env.example .env    # 必须填 JWT_SECRET 才能启动
-make -C .. install
-make -C .. migrate
-make -C .. import        # 站上已有新帖时会拒绝执行，需 --force 才清空
-make -C .. backend                    # http://127.0.0.1:8000/api/docs
-
-# 3. 前端
-make -C .. frontend                   # http://localhost:5173
+# 3. 起服务
+make backend     # http://127.0.0.1:8000
+make frontend    # http://localhost:5173
 ```
 
-首次建库时如果还没有迁移文件：
+没有 docker 或拉不动镜像时，用 `make devdb` 起一个本地 PostgreSQL 16（无需 root）。
+
+导入 Flarum 数据（需要把 dump 和附件放到 `data/` 下）：
 
 ```bash
-cd backend && uv run alembic revision --autogenerate -m "initial schema"
+make import      # 站上已有新帖时会拒绝执行，加 --force 才清空
+make mentions    # 清理旧数据里的 @"name"#p123
+make reindex     # 重建搜索分词
 ```
-
-## 已实现（M1 + M2 写操作）
-
-- 浏览：讨论列表 / 标签筛选 / 帖子时间线 / 搜索 / 附件与 KaTeX
-- 输入 `@` 自动弹出用户候选（带头像，跟随光标，↑↓ 选择并自动滚动、Enter/Tab 插入）；
-  回复/编辑时只能 @ 本帖的楼主、各楼层作者和管理员，其他人保持普通文本、不发通知
-  （新帖第一楼不受限）
-- 单独成段的 B 站 / YouTube 链接会自动变成播放器（新帖也支持）
-- 嵌入：旧帖里的 YouTube / Bilibili 视频（iframe 只允许这三个播放器域名，
-  其余来源在清洗阶段丢弃；`make embeds` 可重新渲染被误删的历史嵌入）
-- 折叠：超过 480px 的代码块、超过 560px 的高图默认收起，点下方按钮展开
-- 内容折叠（管理员）：可折叠整个讨论或单个楼层。折叠的讨论强制不公开、
-  不出现在列表/搜索/标签计数里；折叠的楼层只下发空正文，前端显示「内容已被折叠」
-- 设为公开：管理员和楼主都可以操作；折叠状态下禁止设为公开
-- 账号：登录、登出（立即吊销 access token）、refresh 轮换、CSRF 双提交
-- 用户列表：`/users`，按用户名筛选，显示注册时间、发帖数、讨论数
-- 用户主页：`/u/:id`，资料 + 讨论/回复两个标签页
-- 通知：回复、引用、最佳回复、回复某一楼、@ 提及都会通知对方；点开某条通知
-  自动标为已读，也可一键全部已读；顶栏「通知」显示未读数，有新通知时通过
-  SSE（`GET /api/v1/stream`）即时推送，轮询只做兜底（2 分钟一次）
-- @ 提及：正文里的 `@用户名` 渲染成指向个人主页的链接（按真实用户名匹配，
-  不会误伤邮箱），被提及会收到「在帖子里提到了你」通知；迁移数据里的
-  `@"name"#p123` 用 `make mentions` 清理成 `@name`
-- 系统通知：管理员在 `/notifications` 页发送，给每个用户各写一条记录（各自已读状态），
-  正文保留换行，限 10 次/小时
-- 顶栏：讨论 / 用户 / 通知三个入口；右侧「发帖」和用户菜单（个人主页、设置、退出登录）
-- 设置：`/settings` 改昵称、自我介绍、头像（PNG/JPEG/GIF/WebP，≤2 MB，
-  校验文件头而非只看扩展名）和密码；改密码会吊销其他设备的 refresh token，
-  前端提示重新登录
-- 发帖：`/new` 新建讨论（标题、板块、Markdown 正文）
-- 回复：讨论底部编辑器，可直接「回复某一楼」（通知该层作者）或「引用」（生成引用块）
-- 草稿：新帖和回复的未提交内容自动存 localStorage，刷新/误关后恢复，提交后清除
-- 编辑：作者或管理员可改自己的帖子（迁移的旧帖只读，避免 XML↔Markdown 失真）
-- 管理：置顶/锁定、改标签、设为最佳回复会写入 `discussion_events`；
-  折叠楼层、折叠讨论、改公开状态、发系统通知、改资料/头像/密码写入 `audit_logs`
-- 预览：`POST /api/v1/preview` 与正式发帖共用同一套渲染+清洗
-- 附件：`POST /api/v1/uploads`（multipart），支持 png/jpg/jpeg/gif/webp/avif、
-  mp4/webm/mp3/ogg/wav、pdf/txt/md/zip；单个文件大小上限在 `config.toml`
-  的 `upload_max_bytes`（默认 5 MB），头像上限 `avatar_max_bytes`（默认 2 MB）
-  文件名重写为 `<uuid>-<原名>`，按日期分目录存在 `data/public/assets/files/`
-
-## 访问控制与限流
-
-- 讨论默认**不公开**：未登录访客只能看到 `is_public=true` 的讨论，管理员在讨论页
-  「设为公开 / 转为私密」切换；列表、标签计数、站点统计都按访客身份过滤
-- 搜索需要登录（`GET /search` 走 `CurrentUser`）
-- 帖子附件：游客只能访问「公开讨论正文里引用过」的文件，其余返回 401；
-  头像、字体等公共资源不受限
-- 限流用 slowapi，默认 300 次/分钟，另有：
-  - 登录 10 次/分钟（防爆破）
-  - 搜索 30 次/分钟
-  - 发帖 10 次/小时、回复 30 次/小时、编辑 60 次/小时
-  - 上传 20 次/小时
-  多 worker 部署时把 `app/core/ratelimit.py` 的存储换成 Redis
 
 ## 配置
 
-配置分两层：
+配置分两层，优先级 **环境变量 > `.env` > `config.toml` > 代码默认值**：
 
 | 文件 | 内容 |
 |---|---|
-| `backend/config.toml` | 非敏感项：站点名、env/debug、token 有效期、cookie 策略、CORS、分页、路径 |
-| `backend/.env` | 只放密钥：`DATABASE_URL`、`JWT_SECRET`（以及可选的 `CONFIG_FILE`） |
+| `backend/config.toml` | 非敏感项：站点名、env/debug、token 有效期、cookie 策略、CORS、分页、上传上限、路径 |
+| `backend/.env` | 只放密钥：`DATABASE_URL`、`JWT_SECRET`，可选 `CONFIG_FILE` |
 
-优先级：**环境变量 > `.env` > `config.toml` > `config.py` 里的默认值**。部署时用环境变量临时覆盖任何一项都可以，比如 `COOKIE_SECURE=true`。
+`ENV=production` 时后端会强制校验：`COOKIE_SECURE=true`、CORS 不含 localhost、
+`JWT_SECRET` 不是默认值，任一不满足直接启动失败。
 
-`CONFIG_FILE=/etc/netherrack/config.toml` 可以指向另一份 TOML，方便生产环境把配置放在代码目录外。相对路径（`assets_dir`、`legacy_dump`）按 `backend/` 解析。
+相对路径（`assets_dir`、`legacy_dump`）按 `backend/` 解析；改完配置需要重启后端。
 
-改完 `.env` 或 `config.toml` 后需要重启后端（本地 `make backend` 带 `--reload`）。
+## 目录结构
 
-## 约定
+```
+backend/
+  app/
+    api/routes/      # discussions / posts / users / notifications / stream / uploads …
+    models/          # SQLAlchemy 模型
+    services/        # s9e 解析、内容清洗、搜索、提及、通知、审计、SSE 事件总线
+    core/            # 配置、鉴权、限流、安全响应头
+    importers/       # Flarum 导入
+  config.toml        # 非敏感配置
+  migrations/        # Alembic
+  scripts/           # devdb、重建分词、修复旧提及、恢复嵌入
+  tests/             # 单元测试 + API 集成测试
+frontend/
+  src/
+    pages/           # 首页 / 讨论 / 搜索 / 用户 / 通知 / 设置
+    components/      # 编辑器、楼层、下拉、Toast、折叠 …
+    api/             # 请求封装与 TanStack Query hooks
+    lib/             # 草稿、KaTeX、格式化
+deploy/
+  nginx.conf.example # 反代 + 安全头 + SSE 配置
+data/                # Flarum dump 与附件（不进 git）
+```
 
-- **认证**：access/refresh 两个 JWT 全放 `HttpOnly` cookie；所有写操作要求
-  `X-CSRF-Token` 与 cookie 双提交匹配。
-- **密码**：新密码用 Argon2id；Flarum 迁移来的 bcrypt 在登录成功后自动升级。
-- **内容**：新帖存 Markdown，渲染后经 nh3 清洗入 `body_html`；迁移数据保留原
-  s9e HTML，`is_legacy=true`。
-- **事件**：改标题/改标签等操作存在 `discussion_events`，不混进 posts。
-- **搜索**：jieba 分词写入 `search_text`，PostgreSQL 生成列 + GIN 索引，
-  查询走 `plainto_tsquery`（AND 无结果时放宽为 OR）。
+## 部署
 
+`deploy/nginx.conf.example` 是完整的反代示例，包含：
 
-## 部署安全
+- HTML 的 CSP、HSTS、`X-Frame-Options` 等安全头（API 和 `/media` 由后端负责）
+- `/api/v1/stream` 的 SSE 长连接配置（关缓冲、放宽读超时）
+- `X-Forwarded-For` + 后端 `TRUST_PROXY=true`，限流按真实 IP 计数
 
-`deploy/nginx.conf.example` 是完整的反代示例，要点：
+后端建议用 systemd 或 supervisor 托管，保持**单 worker**（原因见下）。
 
-1. **安全头**：后端给 `/api`、`/media` 加 `CSP`、`X-Frame-Options: DENY`、
-   `nosniff`、`Referrer-Policy`、`Permissions-Policy`；HTML 由 nginx 提供，
-   CSP 写在 nginx 配置里（`frame-ancestors 'none'` 防点击劫持）
-2. **生产配置校验**：`ENV=production` 时后端启动会检查
-   - `COOKIE_SECURE=true`
-   - `CORS_ORIGINS` 不含 localhost
-   - `JWT_SECRET` 不是默认值
-   任一不满足直接启动失败
-3. **JWT_SECRET 没有默认值**：没配就报 `Field required`，不会用弱密钥跑起来
-4. **限流按真实 IP**：nginx 带上 `X-Forwarded-For` 后，后端设 `TRUST_PROXY=true`，
-   `client_ip()` 会取第一个地址；否则所有用户共用一个限流桶
-5. **接口文档默认关闭**：`DEBUG=false` 时 `/api/docs` 和 `/api/openapi.json` 返回 404，
-   需要时用 `DEBUG=true` 打开
-6. 多 worker 的坑见下一节
+### 多 worker 的坑
 
-## 多 worker 注意事项
+有两处状态在进程内存里，加 `--workers N` 会静默失效：
 
-当前的实现有**两处状态在进程内存里**，单 worker（`make backend` 的默认）没问题，
-一旦加 `--workers N` 就会静默出错：
-
-| 组件 | 问题 | 表现 | 修法 |
-|---|---|---|---|
-| `app/core/ratelimit.py` | 每个进程各记一份计数 | 实际额度变成 N 倍；登录防爆破失效 | `Limiter(storage_uri="redis://...")` |
-| `app/services/events.py` | SSE 只认识当前进程的连接 | 用户连在 A、通知产生在 B，前端收不到推送（会退化到 2 分钟轮询） | Postgres `LISTEN/NOTIFY` 或 Redis pub/sub |
+| 组件 | 表现 | 修法 |
+|---|---|---|
+| 限流 | 额度变成 N 倍，防爆破失效 | `Limiter(storage_uri="redis://…")` |
+| SSE 事件总线 | 用户连在 A、通知产生在 B，收不到推送（退化为 2 分钟轮询） | Postgres `LISTEN/NOTIFY` 或 Redis pub/sub |
 
 数据库、会话、通知已读状态、审计日志都在 PostgreSQL 里，多 worker 天然一致。
-如果暂时不想改，就保持单 worker，或者接受"额度放宽 + 推送延迟"。
 
 ## 测试
 
 ```bash
-cd backend && uv run pytest        # 单元测试 + API 集成测试
+make test     # cd backend && uv run pytest
 ```
 
-集成测试用真实 PostgreSQL（复用 `DATABASE_URL`），每个用例包在一个外层事务里，
-结束整体回滚，不会动开发库的数据。所以跑测试前需要数据库在运行（`make db`）。
+集成测试用真实 PostgreSQL（复用 `DATABASE_URL`），每个用例包在外层事务里、
+结束整体回滚，不会动开发库的数据，所以跑之前数据库要在运行。
 
+## 已知限制
+
+- 迁移过来的旧帖只读：Flarum 存的是 s9e XML，没有 Markdown 原文，编辑会覆盖排版
+- 「私密」只是对游客隐藏，登录用户之间互相可见
+- 新用户只能通过导入产生，没有注册、邮箱验证、找回密码
+- 视频嵌入按域名白名单（YouTube / Bilibili），会在页面加载时请求第三方
+
+## 许可证
+
+仓库目前为私有，尚未附许可证。转为公开前需要选定（如 MIT 或 AGPL-3.0）。
