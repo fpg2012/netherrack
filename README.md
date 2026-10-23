@@ -5,10 +5,6 @@
 <h1 align="center">netherrack</h1>
 
 <p align="center">
-  从 Flarum 迁移而来的轻量论坛 —— FastAPI + PostgreSQL + React
-</p>
-
-<p align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white">
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.160-009688?style=flat-square&logo=fastapi&logoColor=white">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white">
@@ -18,16 +14,7 @@
 
 ## 简介
 
-一个自己用的论坛，用来替换跑了五年的 Flarum。后端只输出 JSON，前端是纯 SPA，
-界面刻意保持极简：单色、1px 边框、等宽小标签。
-
-项目名 **netherrack**（地狱岩），站点本身的品牌名是 **soulsand**，
-显示在顶栏和页面标题里。
-
-已有的 152 个讨论、520 个帖子从 Flarum 完整迁移过来，包括标签、附件、
-KaTeX 公式、@ 提及和 B 站 / YouTube 视频嵌入。日常使用覆盖：讨论列表与标签筛选、
-Markdown 发帖与引用、楼层级回复、中文全文搜索、站内通知（SSE 推送）、
-内容折叠与审计日志。
+一个简洁的论坛。
 
 ## 快速开始
 
