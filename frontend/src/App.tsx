@@ -3,6 +3,7 @@ import { Route, Routes, useLocation } from 'react-router-dom'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { ToastHost } from './components/Toast'
+import { NetherrackEgg } from './components/NetherrackEgg'
 import { WidePage } from './components/WidePage'
 import { useMeta } from './api/hooks'
 import { setSiteTimezone } from './lib/format'
@@ -51,6 +52,7 @@ export function App() {
     <div className={wide ? 'shell wide' : 'shell'}>
       <Header />
       <ToastHost />
+      <NetherrackEgg />
       <main className="page">
         <Routes>
           <Route path="/" element={<IndexPage />} />
