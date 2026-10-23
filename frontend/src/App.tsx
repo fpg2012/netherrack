@@ -24,6 +24,29 @@ export function App() {
   const wide = pathname !== '/login' && pathname !== '/register'
   useEffect(() => { setSiteTimezone(meta.data?.timezone) }, [meta.data?.timezone])
 
+  // 纹理从页脚分割线才开始出现：把页脚顶部位置写进 CSS 变量
+  useEffect(() => {
+    const update = () => {
+      const footers = document.querySelectorAll<HTMLElement>('.site-footer, .side-footer')
+      const footer = [...footers].find((el) => el.offsetParent !== null)
+      if (!footer) return
+      const footerTop = footer.getBoundingClientRect().top + window.scrollY
+      // 正文列（含分页、回复框）彻底结束后才出现，避免盖住内容
+      const main = document.querySelector<HTMLElement>('.thread-main, .index-main')
+      const contentBottom = main ? main.getBoundingClientRect().bottom + window.scrollY : 0
+      const top = Math.max(footerTop, contentBottom + 8)
+      document.documentElement.style.setProperty('--tex-start', `${Math.round(top)}px`)
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(document.body)
+    window.addEventListener('resize', update)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [pathname])
+
   return (
     <div className={wide ? 'shell wide' : 'shell'}>
       <Header />
