@@ -19,22 +19,36 @@ export function NetherrackEgg() {
   useEffect(() => { setHoles([]) }, [pathname])
 
   useEffect(() => {
-    let last = 0
+    let clicks = 0
+    let lastHole = 0
     let nextId = 1
     const onClick = (e: MouseEvent) => {
       if (e.button !== 0 || e.defaultPrevented) return
       const el = e.target as HTMLElement | null
       if (!el || el.closest(BLOCKED)) return
-      const now = performance.now()
-      if (now - last < 220) return
+      clicks += 1
+      // 前 5 次点击只当作挖矿前的试探，不会出东西
+      if (clicks < 5) return
       if (Math.random() > 0.22) return
-      last = now
-      const hole = { id: nextId++, x: e.pageX, y: e.pageY }
+      const now = performance.now()
+      if (now - lastHole < 120) return
+      // 对齐到 72px 网格，取点击位置所在格的左上角
+      const x = Math.floor(e.pageX / 72) * 72
+      const y = Math.floor(e.pageY / 72) * 72
+      // 整格必须都在空白处，避免压到卡片或正文
+      const vx = x - window.scrollX
+      const vy = y - window.scrollY
+      for (const [dx, dy] of [[4, 4], [68, 4], [4, 68], [68, 68], [36, 36]]) {
+        const under = document.elementFromPoint(vx + dx, vy + dy)
+        if (under?.closest(BLOCKED)) return
+      }
+      lastHole = now
+      const hole = { id: nextId++, x, y }
       setHoles((prev) => [...prev.slice(-59), hole])
     }
     document.addEventListener('click', onClick)
     return () => document.removeEventListener('click', onClick)
-  }, [])
+  }, [pathname])
 
   if (holes.length === 0) return null
   return createPortal(
