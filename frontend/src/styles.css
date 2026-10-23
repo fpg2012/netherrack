@@ -235,16 +235,15 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   display: block;
   padding: .8em .9em;
   border: 1px solid var(--card-line);
-  /* 不透明底，避免透出页面背景的纹理；回复数越多暖色越深 */
-  background-color: #fbfaf8;
-  background-color: color-mix(in srgb, #b07428 calc(var(--heat, 0) * 13%), #fbfaf8);
+  /* 默认保持纯白；只有 hover 时才按回复数叠上地狱岩红 */
+  background-color: #fff;
   text-decoration: none;
-  transition: background-color .15s, border-color .15s;
+  transition: background-color .22s cubic-bezier(.2, .7, .2, 1), border-color .15s ease;
 }
 .card:hover {
   border-color: var(--card-line-hover);
-  background-color: #f9f6f1;
-  background-color: color-mix(in srgb, #b07428 calc(var(--heat, 0) * 13% + 2.5%), #fbfaf8);
+  background-color: #f4e9e6;
+  background-color: color-mix(in srgb, #7d3f35 calc(10% + var(--heat, 0) * 30%), #fff);
 }
 .card-title { font-weight: bold; color: var(--title); text-decoration: none; }
 .card-title:hover { text-decoration: underline; }
@@ -422,8 +421,10 @@ a.mention:hover { text-decoration: underline; }
     background: color-mix(in srgb, var(--tag, #999) 30%, transparent);
     color: color-mix(in srgb, var(--tag, #999) 38%, #e8e8e8);
   }
-  .card { background-color: rgba(230, 160, 60, calc(var(--heat, 0) * .10)); }
-  .card:hover { background-color: rgba(230, 160, 60, calc(var(--heat, 0) * .10 + .03)); }
+  .card { background-color: #1f1f1f; }
+  .card:hover {
+    background-color: color-mix(in srgb, #a85a4a calc(12% + var(--heat, 0) * 30%), #1f1f1f);
+  }
   .post-head { background: #242424; border-bottom-color: #4a4a4a; }
   .post-head .floor { border-right-color: #4a4a4a; color: #a0a0a0; }
   .post-head .time { color: #a0a0a0; }
@@ -1535,7 +1536,7 @@ button.linkish:hover { color: inherit; }
   width: 0;
   background: #b8614f;
 }
-.checkin-btn.filling::before { animation: checkin-fill 2s linear forwards; }
+.checkin-btn.filling::before { animation: checkin-fill 2s cubic-bezier(.75, 0, .15, 1) forwards; }
 .checkin-btn.filling,
 .checkin-btn.filling:disabled {
   border-color: #b8614f;
@@ -1640,7 +1641,7 @@ button.linkish:hover { color: inherit; }
 .netherrack-burst i {
   position: absolute;
   display: block;
-  animation: netherrack-burst .9s cubic-bezier(.2, .7, .4, 1) forwards;
+  animation: netherrack-burst .9s cubic-bezier(.12, .75, .25, 1) forwards;
   transform: translate(-50%, -50%);
   image-rendering: pixelated;
 }
