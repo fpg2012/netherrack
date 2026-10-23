@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useMe, useUnreadCount } from '../api/hooks'
+import { CheckIn } from './CheckIn'
 import { UserMenu } from './UserMenu'
 
 /** 宽屏首页/帖子页没有顶栏，导航和账号操作都放在侧栏。 */
@@ -48,10 +49,13 @@ export function SidebarHeader() {
       )}
 
       {me.data ? (
-        <div className="side-actions">
-          <UserMenu />
-          <Link className="button" to="/new">发帖</Link>
-        </div>
+        <>
+          <div className="side-actions">
+            <UserMenu />
+            <Link className="button" to="/new">发帖</Link>
+          </div>
+          <CheckIn />
+        </>
       ) : (
         <div className="side-actions">
           <span className="muted">游客</span>

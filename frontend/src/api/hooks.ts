@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type {
   DiscussionBrief, DiscussionDetail, Invite, InviteCreated, Me, Notification, Page, Post,
-  SearchHit, TagWithCount,
+  CheckInStatus, SearchHit, TagWithCount,
   TimelineItem, UserBrief, UserListItem, UserPost, UserProfile,
 } from '../types'
 
@@ -61,6 +61,23 @@ export function useMe() {
     queryKey: ['me'],
     queryFn: () => api.get<Me>('/auth/me'),
     retry: false,
+  })
+}
+
+export function useCheckIn() {
+  const me = useMe()
+  return useQuery({
+    queryKey: ['checkin', me.data?.id],
+    queryFn: () => api.get<CheckInStatus>('/checkin'),
+    enabled: !!me.data,
+  })
+}
+
+export function useDoCheckIn() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.post<CheckInStatus>('/checkin'),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['checkin'] }),
   })
 }
 

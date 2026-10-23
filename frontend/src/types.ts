@@ -101,6 +101,12 @@ export interface UserListItem {
   discussions: number
 }
 
+export interface CheckInStatus {
+  checked_in_today: boolean
+  current_streak: number
+  total_days: number
+}
+
 export interface Notification {
   id: number
   kind: 'reply' | 'quote' | 'best_answer' | 'mention' | 'system'

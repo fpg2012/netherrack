@@ -1484,6 +1484,36 @@ button.linkish:hover { color: inherit; }
   .side-nav .side-search button:hover { background: #2e2e2e; }
 }
 
+/* 侧栏签到 */
+.checkin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8em;
+  margin-top: 1em;
+  padding-top: .8em;
+  border-top: 1px solid var(--line);
+}
+.checkin-meta { display: flex; flex-direction: column; gap: .1em; min-width: 0; }
+.checkin-label {
+  font-family: Menlo, Consolas, monospace;
+  font-size: 78%;
+  letter-spacing: .06em;
+}
+.checkin-days { font-size: 74%; color: #6f6f6f; white-space: nowrap; }
+.checkin-btn {
+  flex: 0 0 auto;
+  padding: .12em .65em;
+  border-color: var(--line-strong);
+  font-size: 80%;
+}
+.checkin-btn:hover:not(:disabled) { border-color: #1a1a1a; }
+@media (prefers-color-scheme: dark) {
+  .checkin-days { color: #9a9a9a; }
+  .checkin-btn { border-color: #4d4d4d; }
+  .checkin-btn:hover:not(:disabled) { border-color: #d8d8d8; }
+}
+
 /* 侧栏页脚 */
 .side-footer {
   display: flex;

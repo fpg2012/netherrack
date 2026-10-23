@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     auth,
+    checkin,
     discussions,
     editor,
     invites,
@@ -17,6 +18,7 @@ from app.api.routes import (
 
 api = APIRouter(prefix="/api/v1")
 api.include_router(auth.router)
+api.include_router(checkin.router)
 api.include_router(invites.router)
 api.include_router(discussions.router)
 api.include_router(posts.router)

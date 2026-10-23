@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useLogout, useMe } from '../api/hooks'
+import { useCheckIn, useDoCheckIn, useLogout, useMe } from '../api/hooks'
 import { Avatar } from './Avatar'
+import { toast } from './Toast'
+import { checkInGreeting } from '../lib/checkin'
 
 export function UserMenu() {
   const me = useMe()
   const logout = useLogout()
+  const checkin = useCheckIn()
+  const doCheckIn = useDoCheckIn()
   const [open, setOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const box = useRef<HTMLDivElement>(null)
@@ -58,6 +62,22 @@ export function UserMenu() {
           <Link to="/settings" role="menuitem" onClick={() => setOpen(false)}>
             设置
           </Link>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={!checkin.data || checkin.data.checked_in_today || doCheckIn.isPending}
+            onClick={() => {
+              setOpen(false)
+              doCheckIn.mutate(undefined, {
+                onSuccess: () => toast(checkInGreeting(name)),
+                onError: (err) => toast(err instanceof Error ? err.message : '签到失败'),
+              })
+            }}
+          >
+            {checkin.data?.checked_in_today
+              ? `今日已签到 · 连续 ${checkin.data.current_streak} 天`
+              : '签到'}
+          </button>
           {me.data.is_admin && (
             <>
               <Link to="/invites" role="menuitem" onClick={() => setOpen(false)}>

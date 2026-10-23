@@ -34,6 +34,14 @@ export function date(iso: string | null): string {
   return datetime(iso).slice(0, 10)
 }
 
+/** 站点时区下当前的小时（0-23），用于签到问候。 */
+export function siteHour(): number {
+  const fmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: siteTimezone, hour: '2-digit', hourCycle: 'h23',
+  })
+  return Number(fmt.format(new Date()))
+}
+
 export function displayName(user: UserBrief | null): string {
   if (!user) return '匿名'
   return user.nickname || user.username
