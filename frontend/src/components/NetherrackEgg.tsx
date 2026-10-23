@@ -20,17 +20,21 @@ export function NetherrackEgg() {
 
   useEffect(() => {
     let clicks = 0
+    let lastClick = 0
     let lastHole = 0
     let nextId = 1
     const onClick = (e: MouseEvent) => {
       if (e.button !== 0 || e.defaultPrevented) return
       const el = e.target as HTMLElement | null
       if (!el || el.closest(BLOCKED)) return
+      const now = performance.now()
+      // 超过 300ms 没点，连击计数从头开始
+      if (now - lastClick > 300) clicks = 0
+      lastClick = now
       clicks += 1
       // 前 5 次点击只当作挖矿前的试探，不会出东西
       if (clicks < 5) return
       if (Math.random() > 0.22) return
-      const now = performance.now()
       if (now - lastHole < 120) return
       // 对齐到 72px 网格，取点击位置所在格的左上角
       const x = Math.floor(e.pageX / 72) * 72
@@ -44,7 +48,11 @@ export function NetherrackEgg() {
       }
       lastHole = now
       const hole = { id: nextId++, x, y }
-      setHoles((prev) => [...prev.slice(-59), hole])
+      setHoles((prev) => (
+        prev.some((h) => h.x === x && h.y === y)
+          ? prev
+          : [...prev.slice(-59), hole]
+      ))
     }
     document.addEventListener('click', onClick)
     return () => document.removeEventListener('click', onClick)
