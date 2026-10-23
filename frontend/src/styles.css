@@ -6,6 +6,7 @@
   --line-strong: #b9b9b9;
   --card-line: #dedede;
   --card-line-hover: #bfbfbf;
+  --post-bg: #ffffff;
   --title: #3d3d3d;
 }
 @media (prefers-color-scheme: dark) {
@@ -45,7 +46,7 @@ html {
   min-height: 100%;
   color: #1a1a1a;
   /* 浅色模式不用纯白，给一点从上到下渐深的暖灰 */
-  background: linear-gradient(180deg, #fcfbf8 0%, #f7f6f2 45%, #f2f1ec 100%) fixed;
+  background: linear-gradient(180deg, #fbfbfc 0%, #f5f5f6 45%, #efeff1 100%) fixed;
 }
 body {
   margin: 0;
