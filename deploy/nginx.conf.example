@@ -1,0 +1,59 @@
+# 生产环境参考配置：前端静态文件 + /api、/media 反代到 uvicorn。
+# 关键点：
+#   1. HTML 的 CSP 必须在这里加（后端只负责 API 和 /media 的响应头）
+#   2. 反代要带 X-Forwarded-For，后端把 TRUST_PROXY 打开才能按真实 IP 限流
+#   3. 只走 HTTPS，并配合后端 COOKIE_SECURE=true
+
+server {
+    listen 80;
+    server_name forum.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name forum.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/forum.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/forum.example.com/privkey.pem;
+
+    root /srv/flarum-web/frontend/dist;
+    index index.html;
+
+    # ---- 安全头（HTML）----
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "same-origin" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src https://www.youtube-nocookie.com https://www.youtube.com https://player.bilibili.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'" always;
+
+    # 带 hash 的静态资源可以长缓存
+    location /assets/ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 12m;       # 上传上限 10 MB，留点余量
+    }
+
+    # 附件由后端做可见性判断，不要用 nginx 直接发文件
+    location /media/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # SPA 路由
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

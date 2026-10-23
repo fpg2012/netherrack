@@ -18,7 +18,7 @@ make db
 #    make devdb
 
 # 2. 后端
-cd backend && cp .env.example .env    # 至少改掉 JWT_SECRET
+cd backend && cp .env.example .env    # 必须填 JWT_SECRET 才能启动
 make -C .. install
 make -C .. migrate
 make -C .. import        # 站上已有新帖时会拒绝执行，需 --force 才清空
@@ -92,3 +92,23 @@ cd backend && uv run alembic revision --autogenerate -m "initial schema"
   s9e HTML，`is_legacy=true`。
 - **事件**：改标题/改标签等操作存在 `discussion_events`，不混进 posts。
 - **搜索**：`pg_trgm` + `ILIKE`，见 `migrations/versions/*` 里的 GIN 索引。
+
+
+## 部署安全
+
+`deploy/nginx.conf.example` 是完整的反代示例，要点：
+
+1. **安全头**：后端给 `/api`、`/media` 加 `CSP`、`X-Frame-Options: DENY`、
+   `nosniff`、`Referrer-Policy`、`Permissions-Policy`；HTML 由 nginx 提供，
+   CSP 写在 nginx 配置里（`frame-ancestors 'none'` 防点击劫持）
+2. **生产配置校验**：`ENV=production` 时后端启动会检查
+   - `COOKIE_SECURE=true`
+   - `CORS_ORIGINS` 不含 localhost
+   - `JWT_SECRET` 不是默认值
+   任一不满足直接启动失败
+3. **JWT_SECRET 没有默认值**：没配就报 `Field required`，不会用弱密钥跑起来
+4. **限流按真实 IP**：nginx 带上 `X-Forwarded-For` 后，后端设 `TRUST_PROXY=true`，
+   `client_ip()` 会取第一个地址；否则所有用户共用一个限流桶
+5. **接口文档默认关闭**：`DEBUG=false` 时 `/api/docs` 和 `/api/openapi.json` 返回 404，
+   需要时用 `DEBUG=true` 打开
+6. 多 worker 时把 `app/core/ratelimit.py` 的存储换成 Redis，否则每个进程各算一份
