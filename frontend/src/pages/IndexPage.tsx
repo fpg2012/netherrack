@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router-dom'
 import { useDiscussions, useMeta, useTags } from '../api/hooks'
 import { DiscussionCard } from '../components/DiscussionCard'
+import { SidebarHeader } from '../components/SidebarHeader'
 import { TagBar } from '../components/TagBar'
 
 export function IndexPage() {
@@ -21,13 +22,13 @@ export function IndexPage() {
 
   return (
     <>
-      <h1>{tagName ?? '全部讨论'}</h1>
-      <p className="muted">
-        {loading ? '加载中…' : `共 ${discussions.data?.total ?? 0} 个讨论`}
-      </p>
-
       <div className="index-layout">
         <div className="index-main">
+          <h1>{tagName ?? '全部讨论'}</h1>
+          <p className="muted">
+            {loading ? '加载中…' : `共 ${discussions.data?.total ?? 0} 个讨论`}
+          </p>
+
           <TagBar
             tags={tags.data ?? []}
             total={meta.data?.discussions ?? 0}
@@ -55,6 +56,8 @@ export function IndexPage() {
         </div>
 
         <aside className="sidebar">
+          <SidebarHeader />
+
           <h2>标签</h2>
           <TagBar
             tags={tags.data ?? []}
