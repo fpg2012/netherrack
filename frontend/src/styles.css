@@ -7,6 +7,7 @@
   --card-line: #dedede;
   --card-line-hover: #bfbfbf;
   --card-hover-bg: #fcfcfc;
+  --title: #333333;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -15,6 +16,7 @@
     --card-line: #333333;
     --card-line-hover: #4d4d4d;
     --card-hover-bg: #202020;
+    --title: #dcdcdc;
   }
 }
 
@@ -53,7 +55,7 @@ a { overflow-wrap: anywhere; }
 pre, pre * { overflow-wrap: normal; word-break: normal; }
 a:hover { text-decoration: underline; }
 img { max-width: 100%; }
-h1 { margin-top: 0; font-size: 1.75em; line-height: 1.3; }
+h1 { margin-top: 0; font-size: 1.75em; line-height: 1.3; color: var(--title); }
 .muted, small { color: #606060; }
 
 /* 顶栏 */
@@ -140,31 +142,40 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   font-size: 75%;
   line-height: 1.6;
   padding: 0 .5em;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--tag, #999);
+  border-color: color-mix(in srgb, var(--tag, #999) 38%, transparent);
   border-radius: 2px;
-  color: #666;
+  background: color-mix(in srgb, var(--tag, #999) 9%, transparent);
+  color: color-mix(in srgb, var(--tag, #999) 35%, #1a1a1a);
   text-decoration: none;
 }
-.tagbar a:hover { border-color: #999; color: #333; }
-.tagbar a.active { border-color: #1a1a1a; color: #1a1a1a; font-weight: bold; }
-.tagbar .n { color: #999; font-size: 90%; }
+.tagbar a:hover {
+  border-color: color-mix(in srgb, var(--tag, #999) 65%, transparent);
+  color: #1a1a1a;
+}
+.tagbar a.active {
+  border-color: var(--tag, #999);
+  background: color-mix(in srgb, var(--tag, #999) 18%, transparent);
+  color: #1a1a1a;
+  font-weight: bold;
+}
+.tagbar .n { color: #8a8a8a; font-size: 90%; }
 
 /* 讨论网格 */
 .grid {
   display: grid;
-  gap: 1.3em;
-  margin: 1.6em 0;
-  /* 48rem 宽度下排两列，比三列宽松，标题也少折行 */
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.1em;
+  margin: 1.5em 0;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 .card {
   display: block;
-  padding: .9em 1em;
+  padding: .8em .9em;
   border: 1px solid var(--card-line);
   text-decoration: none;
 }
 .card:hover { border-color: var(--card-line-hover); background: var(--card-hover-bg); }
-.card-title { font-weight: bold; text-decoration: none; }
+.card-title { font-weight: bold; color: var(--title); text-decoration: none; }
 .card-title:hover { text-decoration: underline; }
 .card-meta { margin-top: .45em; color: #6f6f6f; font-size: 85%; }
 .card-snippet { margin: .4em 0 0; font-size: 85%; color: #606060; }
@@ -180,10 +191,11 @@ a.button:hover { background: #1a1a1a; color: #fdfdfd; }
   padding: 0 .4em;
   margin-right: .45em;
   border: 1px solid var(--tag, #999);
-  /* 支持 color-mix 的浏览器再把标签边框调淡；不支持就退回实色 */
-  border-color: color-mix(in srgb, var(--tag, #999) 62%, transparent);
+  /* 支持 color-mix 的浏览器用带色背景；不支持就退回白底彩色描边 */
+  border-color: color-mix(in srgb, var(--tag, #999) 45%, transparent);
+  background: color-mix(in srgb, var(--tag, #999) 12%, transparent);
   border-radius: 2px;
-  color: #555;
+  color: color-mix(in srgb, var(--tag, #999) 42%, #1a1a1a);
 }
 .tag a { color: inherit; text-decoration: none; }
 .tag a:hover { text-decoration: underline; }
@@ -303,10 +315,22 @@ a.mention:hover { text-decoration: underline; }
 @media (prefers-color-scheme: dark) {
   html { color: #d8d8d8; background-color: #1a1a1a; }
   .card-meta, .card-snippet, .muted, small, blockquote, .pager { color: #a0a0a0; }
-  .tagbar a { border-color: #3a3a3a; color: #a0a0a0; }
-  .tagbar a:hover { border-color: #666; color: #d8d8d8; }
-  .tagbar a.active { border-color: #d8d8d8; color: #d8d8d8; }
-  .tag { color: #c8c8c8; }
+  .tagbar a {
+    border-color: color-mix(in srgb, var(--tag, #999) 45%, transparent);
+    background: color-mix(in srgb, var(--tag, #999) 16%, transparent);
+    color: color-mix(in srgb, var(--tag, #999) 35%, #e8e8e8);
+  }
+  .tagbar a:hover { color: #f0f0f0; }
+  .tagbar a.active {
+    border-color: var(--tag, #999);
+    background: color-mix(in srgb, var(--tag, #999) 26%, transparent);
+    color: #f0f0f0;
+  }
+  .tag {
+    border-color: color-mix(in srgb, var(--tag, #999) 55%, transparent);
+    background: color-mix(in srgb, var(--tag, #999) 20%, transparent);
+    color: color-mix(in srgb, var(--tag, #999) 35%, #e8e8e8);
+  }
   .post-head { background: #242424; border-bottom-color: #3a3a3a; }
   .post-head .floor { border-right-color: #3a3a3a; color: #a0a0a0; }
   .post-head .time { color: #a0a0a0; }

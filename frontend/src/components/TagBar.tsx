@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { TagWithCount } from '../types'
 
@@ -14,6 +15,7 @@ export function TagBar({ tags, total, active }: {
           key={t.id}
           to={`/?tag=${t.slug}`}
           className={t.slug === active ? 'active' : ''}
+          style={{ '--tag': t.color ?? '#999' } as CSSProperties}
         >
           {t.name}<span className="n">{t.count}</span>
         </Link>
