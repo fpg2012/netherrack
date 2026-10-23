@@ -1,7 +1,10 @@
+import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { ToastHost } from './components/Toast'
+import { useMeta } from './api/hooks'
+import { setSiteTimezone } from './lib/format'
 import { IndexPage } from './pages/IndexPage'
 import { DiscussionPage } from './pages/DiscussionPage'
 import { SearchPage } from './pages/SearchPage'
@@ -13,6 +16,9 @@ import { NotificationsPage } from './pages/NotificationsPage'
 import { SettingsPage } from './pages/SettingsPage'
 
 export function App() {
+  const meta = useMeta()
+  useEffect(() => { setSiteTimezone(meta.data?.timezone) }, [meta.data?.timezone])
+
   return (
     <>
       <Header />

@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "flarum-api"
+    # 站点时区：只影响前端展示，数据库统一存 UTC
+    timezone: str = "Asia/Shanghai"
     debug: bool = False
     # dev | production：生产环境会在启动时校验下面几项
     env: str = "dev"

@@ -31,6 +31,8 @@ export function DiscussionPage() {
   const [quote, setQuote] = useState<Post | null>(null)
   const [replyTo, setReplyTo] = useState<Post | null>(null)
   const [tagEditor, setTagEditor] = useState(false)
+  const [titleEditor, setTitleEditor] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
   const [picked, setPicked] = useState<string[]>([])
   const replyBox = useRef<HTMLTextAreaElement>(null)
 
@@ -40,6 +42,12 @@ export function DiscussionPage() {
   const isAdmin = me.data?.is_admin ?? false
   const isAuthor = me.data?.id === d.author?.id
   const canReply = !!me.data && (!d.is_locked || isAdmin)
+
+  const saveTitle = () => {
+    const title = titleDraft.trim()
+    if (title.length < 2 || title === d.title) return
+    editDiscussion.mutate({ title }, { onSuccess: () => setTitleEditor(false) })
+  }
 
   const quoteText = (post: Post) => {
     const text = (post.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()).slice(0, 200)
@@ -54,7 +62,32 @@ export function DiscussionPage() {
 
   return (
     <>
-      <h1>{d.title}</h1>
+      {titleEditor ? (
+        <div className="title-editor">
+          <input
+            className="title-input"
+            value={titleDraft}
+            maxLength={200}
+            autoFocus
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') saveTitle()
+              if (e.key === 'Escape') setTitleEditor(false)
+            }}
+          />
+          <button
+            className="btn"
+            disabled={editDiscussion.isPending || titleDraft.trim().length < 2
+              || titleDraft.trim() === d.title}
+            onClick={saveTitle}
+          >
+            保存
+          </button>
+          <button className="btn" onClick={() => setTitleEditor(false)}>取消</button>
+        </div>
+      ) : (
+        <h1>{d.title}</h1>
+      )}
       <div className="discussion-meta">
         <p className="muted">
           {displayName(d.author)} · {datetime(d.created_at)} · {timeline.data?.total ?? d.post_count} 帖
@@ -66,6 +99,13 @@ export function DiscussionPage() {
           <Dropdown
             label={isAdmin ? '管理' : '操作'}
             items={[
+              {
+                label: '改标题…',
+                onSelect: () => {
+                  setTitleDraft(d.title)
+                  setTitleEditor(true)
+                },
+              },
               {
                 label: '改标签…',
                 onSelect: () => {

@@ -4,6 +4,8 @@
 
 # ---- 站点 ----
 app_name = "netherrack"
+# 展示用时区（数据库统一存 UTC）
+timezone = "Asia/Shanghai"
 # dev | production：production 会强制校验 cookie_secure / cors_origins
 env = "dev"
 # true 时开放 /api/docs 和 /api/openapi.json

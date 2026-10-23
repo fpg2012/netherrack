@@ -47,7 +47,7 @@ export function useSearch(q: string, page: number) {
 export function useMeta() {
   return useQuery({
     queryKey: ['meta'],
-    queryFn: () => api.get<{ discussions: number; posts: number; users: number }>('/meta'),
+    queryFn: () => api.get<{ discussions: number; posts: number; users: number; timezone: string }>('/meta'),
     staleTime: 5 * 60_000,
   })
 }
