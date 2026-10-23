@@ -1297,7 +1297,7 @@ button.linkish:hover { color: inherit; }
 .sidebar h2 {
   margin: 0 0 .5em;
   font-family: Menlo, Consolas, monospace;
-  font-size: 72%;
+  font-size: 80%;
   font-weight: normal;
   letter-spacing: .08em;
   color: #8a8a8a;
@@ -1305,9 +1305,33 @@ button.linkish:hover { color: inherit; }
 .sidebar h2:not(:first-child) { margin-top: 1.8em; }
 
 .tagbar.sidebar {
-  gap: .35em;
+  flex-direction: column;
+  gap: 0;
   margin: 0;
 }
+/* 保留行式结构：标签名是彩色 span，数量靠右 */
+.tagbar.sidebar a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6em;
+  width: 100%;
+  padding: .34em 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: inherit;
+  font-size: 95%;
+}
+.tagbar.sidebar a:hover { border-bottom-color: var(--line-strong); }
+.tagbar.sidebar a.active { border-bottom-color: var(--line-strong); }
+.tagbar.sidebar a.active .tag { font-weight: bold; }
+.tagbar.sidebar .tag {
+  margin-right: 0;
+  padding: .12em .5em;
+  font-size: 82%;
+}
+.tagbar.sidebar .n { color: #999; font-size: 80%; }
 
 .site-stats { margin: 0; font-size: 85%; }
 .site-stats div {

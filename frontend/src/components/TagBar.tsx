@@ -19,7 +19,10 @@ export function TagBar({ tags, untagged, active, untaggedActive = false, variant
         className={untaggedActive ? 'active' : ''}
         style={{ '--tag': '#999' } as CSSProperties}
       >
-        无标签<span className="n">{untagged}</span>
+        {variant === 'sidebar'
+          ? <span className="tag" style={{ '--tag': '#999' } as CSSProperties}>无标签</span>
+          : '无标签'}
+        <span className="n">{untagged}</span>
       </Link>
       {visible.map((t) => (
         <Link
@@ -28,7 +31,10 @@ export function TagBar({ tags, untagged, active, untaggedActive = false, variant
           className={t.slug === active ? 'active' : ''}
           style={{ '--tag': t.color ?? '#999' } as CSSProperties}
         >
-          {t.name}<span className="n">{t.count}</span>
+          {variant === 'sidebar'
+            ? <span className="tag" style={{ '--tag': t.color ?? '#999' } as CSSProperties}>{t.name}</span>
+            : t.name}
+          <span className="n">{t.count}</span>
         </Link>
       ))}
     </nav>
