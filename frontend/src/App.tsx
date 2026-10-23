@@ -32,14 +32,23 @@ export function App() {
       const footer = [...footers].find((el) => el.offsetParent !== null)
       if (!footer) return
       const footerTop = footer.getBoundingClientRect().top + window.scrollY
-      // 正文列（含分页、回复框）彻底结束后才出现，避免盖住内容
+      // 正文列（含分页、回复框）彻底结束后才出现，避免盖住内容；
+      // 同时把纹理限制在页面最后一段，短页面不会铺满下半屏
       const main = document.querySelector<HTMLElement>('.thread-main, .index-main')
       const contentBottom = main ? main.getBoundingClientRect().bottom + window.scrollY : 0
-      const top = Math.max(footerTop, contentBottom + 8)
+      const pageBottom = document.documentElement.scrollHeight
+      const top = main
+        ? Math.max(contentBottom + 8, pageBottom - 140)
+        : footerTop
       document.documentElement.style.setProperty('--tex-start', `${Math.round(top)}px`)
     }
     update()
     const ro = new ResizeObserver(update)
+    // 数据是异步加载的，正文/侧栏/页脚高度都会在首屏之后变化
+    const targets = document.querySelectorAll(
+      '.page, .thread-main, .index-main, .sidebar, .site-footer, .side-footer',
+    )
+    targets.forEach((el) => ro.observe(el))
     ro.observe(document.body)
     window.addEventListener('resize', update)
     return () => {
