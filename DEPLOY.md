@@ -21,6 +21,7 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 |---|---|---|
 | `app_name` | `netherrack` | OpenAPI 标题 |
 | `timezone` | `Asia/Shanghai` | 展示用时区（数据库统一存 UTC） |
+| `default_tag` | 空 | 默认板块的标签 slug：首页默认只看该板块，发帖时默认勾选；留空或标签不存在时展示全部 |
 | `env` | `dev` | `production` 时触发启动校验 |
 | `debug` | `false` | `true` 才开放 `/api/docs` 和 `/api/openapi.json` |
 | `access_token_ttl` | `900` | access token 有效期（秒） |

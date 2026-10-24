@@ -51,6 +51,8 @@ export function useMeta() {
     queryKey: ['meta'],
     queryFn: () => api.get<{
       discussions: number; posts: number; users: number; untagged: number; timezone: string
+      // 站点配了默认板块（标签 slug）时才有值
+      default_tag: string | null
     }>('/meta'),
     staleTime: 5 * 60_000,
   })

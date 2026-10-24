@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     app_name: str = "flarum-api"
     # 站点时区：只影响前端展示，数据库统一存 UTC
     timezone: str = "Asia/Shanghai"
+    # 默认板块（标签 slug）：首页默认只看这个标签，发帖时也默认勾上；留空则不启用
+    default_tag: str = ""
     debug: bool = False
     # dev | production：生产环境会在启动时校验下面几项
     env: str = "dev"

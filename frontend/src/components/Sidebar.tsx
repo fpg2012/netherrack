@@ -7,14 +7,18 @@ interface Meta {
   discussions: number
   posts: number
   users: number
+  untagged: number
+  default_tag: string | null
 }
 
 /** 宽屏侧栏：导航、标签、站点统计、页脚。首页和帖子页共用。 */
-export function Sidebar({ tags, meta, active = null, untaggedActive = false }: {
+export function Sidebar({ tags, meta, active = null, untaggedActive = false,
+                          allActive = false }: {
   tags: TagWithCount[]
-  meta: (Meta & { untagged: number }) | undefined
+  meta: Meta | undefined
   active?: string | null
   untaggedActive?: boolean
+  allActive?: boolean
 }) {
   return (
     <>
@@ -24,8 +28,11 @@ export function Sidebar({ tags, meta, active = null, untaggedActive = false }: {
       <TagBar
         tags={tags}
         untagged={meta?.untagged ?? 0}
+        total={meta?.discussions ?? 0}
         active={active}
         untaggedActive={untaggedActive}
+        showAll={!!meta?.default_tag}
+        allActive={allActive}
         variant="sidebar"
       />
 

@@ -6,12 +6,16 @@ import { TagBar } from '../components/TagBar'
 
 export function IndexPage() {
   const [params, setParams] = useSearchParams()
-  const tag = params.get('tag')
+  const tagParam = params.get('tag')
   const untagged = params.get('untagged') === '1'
+  const all = params.get('all') === '1'
   const page = Math.max(1, Number(params.get('page') ?? 1))
-  const discussions = useDiscussions({ page, tag, untagged })
   const tags = useTags()
   const meta = useMeta()
+  // 站点配了默认板块时，不带参数的首页就是那个板块；「全部」要显式点
+  const defaultTag = meta.data?.default_tag ?? null
+  const tag = untagged ? null : (tagParam ?? (all ? null : defaultTag))
+  const discussions = useDiscussions({ page, tag, untagged })
   const tagName = untagged ? null : tags.data?.find((t) => t.slug === tag)?.name
   const loading = discussions.isPending
 
@@ -33,8 +37,11 @@ export function IndexPage() {
           <TagBar
             tags={tags.data ?? []}
             untagged={meta.data?.untagged ?? 0}
+            total={meta.data?.discussions ?? 0}
             active={tag}
             untaggedActive={untagged}
+            showAll={!!defaultTag}
+            allActive={all}
           />
 
           <div className="grid">
@@ -62,6 +69,7 @@ export function IndexPage() {
             tags={tags.data ?? []}
             active={tag}
             untaggedActive={untagged}
+            allActive={all}
             meta={meta.data}
           />
         </aside>
