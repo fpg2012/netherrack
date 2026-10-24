@@ -2,10 +2,11 @@
 __pycache__/
 *.py[cod]
 .venv/
-backend/.env
 backend/.pgdata/
 backend/.ruff_cache/
 backend/.pytest_cache/
+.coverage
+htmlcov/
 
 # 前端
 frontend/node_modules/
@@ -13,6 +14,29 @@ frontend/dist/
 
 # 数据（含用户邮箱与密码哈希）
 data/
+*.sql.gz
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+
+# 本地配置与密钥，永远不要提交
+.env
+.env.*
+!**/.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# 日志与编辑器临时文件
+*.log
+.DS_Store
 
 # TypeScript 增量构建缓存
 frontend/tsconfig.tsbuildinfo

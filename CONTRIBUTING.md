@@ -73,4 +73,4 @@ uv run alembic upgrade head
 
 ## 许可证
 
-仓库目前为私有，尚未附许可证。转为公开前需要选定（如 MIT 或 AGPL-3.0）。
+项目采用 GPL-3.0-or-later 发布，详见 [LICENSE](LICENSE)。提交代码即表示同意按同一许可证发布。

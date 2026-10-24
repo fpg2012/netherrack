@@ -53,3 +53,7 @@ make reindex     # 重建搜索分词
 
 - 配置项、部署、多 worker 注意事项：[DEPLOY.md](DEPLOY.md)
 - 代码结构、开发约定、测试、已知限制：[CONTRIBUTING.md](CONTRIBUTING.md)
+
+## 许可证
+
+本项目采用 [GNU General Public License v3.0 or later](LICENSE)（GPL-3.0-or-later）发布。

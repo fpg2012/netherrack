@@ -12,7 +12,7 @@ refresh_token_ttl = 604800
 cookie_secure = true
 cookie_samesite = "lax"
 
-cors_origins = ["https://forum.soulsand.top"]
+cors_origins = ["https://forum.example.com"]
 # 前面有 Cloudflare + nginx，限流按 X-Forwarded-For 里的客户端 IP 计数
 trust_proxy = true
 
