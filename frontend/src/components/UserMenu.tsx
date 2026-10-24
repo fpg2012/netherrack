@@ -5,9 +5,11 @@ import { Avatar } from './Avatar'
 import { toast } from './Toast'
 import { checkInGreeting } from '../lib/checkin'
 import { netherrackBurst } from '../lib/burst'
+import { nextTheme, THEME_LABELS, useTheme } from '../lib/theme'
 
 export function UserMenu() {
   const me = useMe()
+  const { theme, setTheme } = useTheme()
   const logout = useLogout()
   const checkin = useCheckIn()
   const doCheckIn = useDoCheckIn()
@@ -63,6 +65,14 @@ export function UserMenu() {
           <Link to="/settings" role="menuitem" onClick={() => setOpen(false)}>
             设置
           </Link>
+          <button
+            type="button"
+            role="menuitem"
+            aria-label={`配色：${THEME_LABELS[theme]}，点击切换`}
+            onClick={() => setTheme(nextTheme(theme))}
+          >
+            配色：{THEME_LABELS[theme]}
+          </button>
           <button
             type="button"
             role="menuitem"

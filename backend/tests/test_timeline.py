@@ -22,9 +22,8 @@ async def make_user(session, name: str, admin: bool = False) -> User:
     return user
 
 
-async def make_discussion(session, author: User, *, title: str = "t",
-                          started: datetime) -> Discussion:
-    discussion = Discussion(title=title, author_id=author.id, created_at=started,
+async def make_discussion(session, author: User, *, started: datetime) -> Discussion:
+    discussion = Discussion(title="t", author_id=author.id, created_at=started,
                             last_posted_at=started, post_count=1, is_public=True)
     session.add(discussion)
     await session.commit()

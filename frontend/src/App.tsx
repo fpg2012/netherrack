@@ -4,6 +4,7 @@ import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { ToastHost } from './components/Toast'
 import { NetherrackEgg } from './components/NetherrackEgg'
+import { ThemeLantern } from './components/ThemeLantern'
 import { WidePage } from './components/WidePage'
 import { useMeta } from './api/hooks'
 import { setSiteTimezone } from './lib/format'
@@ -63,6 +64,7 @@ export function App() {
       <Header />
       <ToastHost />
       <NetherrackEgg />
+      <div className="corner-lantern"><ThemeLantern /></div>
       <main className="page">
         <Routes>
           <Route path="/" element={<IndexPage />} />
