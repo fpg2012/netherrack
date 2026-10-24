@@ -139,7 +139,7 @@ async def test_collapsed_post_body_hidden(session, client) -> None:
 
     timeline = (await client.get(
         f"/api/v1/discussions/{discussion.id}/timeline?per_page=10")).json()
-    item = next(i for i in timeline["items"] if i.get("post", {}).get("id") == post.id)
+    item = next(i for i in timeline["items"] if (i.get("post") or {}).get("id") == post.id)
     assert item["post"]["is_collapsed"] is True
     assert item["post"]["body_html"] == ""
 
@@ -246,7 +246,9 @@ async def test_admin_resets_user_password(session, client) -> None:
         .where(RefreshToken.user_id == target.id))
     assert tokens == 0
     log = await session.scalar(
-        select(AuditLog).where(AuditLog.action == "user.password_reset"))
+        select(AuditLog).where(AuditLog.action == "user.password_reset",
+                              AuditLog.target_id == target.id)
+        .order_by(AuditLog.id.desc()))
     assert log is not None and log.payload["generated"] is False
 
     # 不传密码时自动生成

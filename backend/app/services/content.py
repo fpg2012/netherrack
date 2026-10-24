@@ -118,47 +118,6 @@ def render_legacy_s9e(xml: str, uploads: dict | None = None) -> str:
     )))
 
 
-EVENT_TEXT = {
-    "discussionRenamed": "将标题从「{0}」改为「{1}」",
-    "discussionTagged": "修改了标签",
-    "discussionStickied": "置顶了该讨论",
-    "discussionLocked": "锁定了该讨论",
-    "recipientsModified": "修改了参与者",
-    "recipientLeft": "退出了该讨论",
-    "discussionCollapsed": "折叠了该讨论",
-}
-
-
-def event_text(kind: str, payload: object, who: str, tag_names: dict[int, str]) -> str:
-    if kind == "discussionRenamed":
-        values = payload if isinstance(payload, list) else []
-        old, new = (values + ["", ""])[:2]
-        return f"{who} 将标题从「{old}」改为「{new}」"
-    if kind == "discussionTagged":
-        values = payload if isinstance(payload, list) else [[], []]
-        added, removed = (values + [[], []])[:2]
-        parts = []
-        if added:
-            parts.append("添加标签 " + "、".join(tag_names.get(i, str(i)) for i in added))
-        if removed:
-            parts.append("移除标签 " + "、".join(tag_names.get(i, str(i)) for i in removed))
-        return f"{who} " + "，".join(parts) if parts else f"{who} 修改了标签"
-    if kind == "discussionStickied":
-        data = payload if isinstance(payload, dict) else {}
-        return f"{who} {'置顶' if data.get('sticky') else '取消置顶'}了该讨论"
-    if kind == "discussionLocked":
-        data = payload if isinstance(payload, dict) else {}
-        return f"{who} {'锁定' if data.get('locked') else '解锁'}了该讨论"
-    if kind == "recipientsModified":
-        return f"{who} 修改了参与者"
-    if kind == "recipientLeft":
-        return f"{who} 退出了该讨论"
-    if kind == "discussionCollapsed":
-        data = payload if isinstance(payload, dict) else {}
-        return f"{who} {'折叠' if data.get('collapsed') else '取消折叠'}了该讨论"
-    return f"{who} {kind}"
-
-
 _BLOCK = re.compile(
     r"</?(p|div|br|li|ul|ol|pre|blockquote|h[1-6]|tr|td|th|table)[^>]*>", re.I
 )

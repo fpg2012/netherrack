@@ -12,6 +12,7 @@ from app.services.content import render_markdown
 from app.services.mentions import link_mentions, mentionable_users
 from app.services.notifications import notify_mentions
 from app.services.search import index_text
+from app.services.timeline import record
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -74,6 +75,10 @@ async def collapse_post(request: Request, post_id: int, payload: CollapsePost,
         raise HTTPException(status.HTTP_404_NOT_FOUND, "帖子不存在")
     if post.is_collapsed != payload.is_collapsed:
         post.is_collapsed = payload.is_collapsed
+        record(session, discussion_id=post.discussion_id, actor_id=user.id,
+               kind="postCollapsed",
+               payload={"post_number": post.number,
+                        "collapsed": payload.is_collapsed})
         await audit(session, actor_id=user.id, action="post.collapse",
                     target_type="post", target_id=post.id,
                     collapsed=payload.is_collapsed, discussion_id=post.discussion_id)

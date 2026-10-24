@@ -18,7 +18,7 @@ from app.schemas.content import (
 )
 from app.schemas.write import EditDiscussion, NewDiscussion, NewPost
 from app.services.audit import audit
-from app.services.content import event_text, render_markdown
+from app.services.content import render_markdown
 from app.services.mentions import link_mentions, mentionable_users, username_map
 from app.services.notifications import (
     notify_best_answer,
@@ -28,6 +28,7 @@ from app.services.notifications import (
 )
 from app.services.quote import build_quote
 from app.services.search import index_text, segment
+from app.services.timeline import event_text, record
 from app.services.visibility import can_view, discussion_visible
 
 router = APIRouter(prefix="/discussions", tags=["discussions"])
@@ -117,25 +118,29 @@ async def timeline(
         select(func.count()).select_from(Post)
         .where(Post.discussion_id == discussion_id, Post.hidden_at.is_(None))
     ) or 0
-    posts = (await session.scalars(
+    rows = (await session.scalars(
         select(Post)
         .where(Post.discussion_id == discussion_id, Post.hidden_at.is_(None))
         .order_by(Post.number)
-        .limit(per_page)
+        .limit(per_page + 1)
         .offset((page - 1) * per_page)
     )).all()
+    posts = rows[:per_page]
+    # 多取一条帖子只用来知道「下一页从哪个时刻开始」
+    next_page_at = rows[per_page].created_at if len(rows) > per_page else None
 
+    # 事件跟着帖子分页：本页首帖 ~ 下一页首帖之间的记录算这一页；
+    # 最后一页收尾到 +∞，否则「最后一条回复之后」的操作永远看不到。
     events: list[DiscussionEvent] = []
     if posts:
-        events = list(await session.scalars(
-            select(DiscussionEvent)
-            .where(
-                DiscussionEvent.discussion_id == discussion_id,
-                DiscussionEvent.created_at >= posts[0].created_at,
-                DiscussionEvent.created_at <= posts[-1].created_at,
-            )
-            .order_by(DiscussionEvent.created_at)
-        ))
+        stmt = select(DiscussionEvent).where(
+            DiscussionEvent.discussion_id == discussion_id
+        )
+        if page > 1:
+            stmt = stmt.where(DiscussionEvent.created_at >= posts[0].created_at)
+        if next_page_at is not None:
+            stmt = stmt.where(DiscussionEvent.created_at < next_page_at)
+        events = list(await session.scalars(stmt.order_by(DiscussionEvent.created_at)))
 
     names = {t.id: t.name for t in await session.scalars(select(Tag))}
     items: list[TimelineItem] = []
@@ -171,12 +176,6 @@ async def _tags_by_slug(session, slugs: list[str]) -> list[Tag]:
     if len(rows) != len(set(slugs)):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "包含不存在的标签")
     return rows
-
-
-def _record(session, discussion_id: int, actor_id: int, kind: str, payload: dict) -> None:
-    session.add(DiscussionEvent(
-        discussion_id=discussion_id, actor_id=actor_id, kind=kind, payload=payload,
-    ))
 
 
 @router.post("", response_model=DiscussionDetail, status_code=201,
@@ -299,20 +298,20 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
         raise HTTPException(status.HTTP_403_FORBIDDEN, "无权修改该讨论")
 
     if payload.title and payload.title != discussion.title:
-        _record(session, discussion.id, user.id, "discussionRenamed",
-                {"old": discussion.title, "new": payload.title})
+        record(session, discussion_id=discussion.id, actor_id=user.id,
+               kind="discussionRenamed", payload=[discussion.title, payload.title])
         discussion.title = payload.title
         discussion.search_text = segment(payload.title)
 
     if payload.is_sticky is not None and payload.is_sticky != discussion.is_sticky:
         discussion.is_sticky = payload.is_sticky
-        _record(session, discussion.id, user.id, "discussionStickied",
-                {"sticky": payload.is_sticky})
+        record(session, discussion_id=discussion.id, actor_id=user.id,
+               kind="discussionStickied", payload={"sticky": payload.is_sticky})
 
     if payload.is_locked is not None and payload.is_locked != discussion.is_locked:
         discussion.is_locked = payload.is_locked
-        _record(session, discussion.id, user.id, "discussionLocked",
-                {"locked": payload.is_locked})
+        record(session, discussion_id=discussion.id, actor_id=user.id,
+               kind="discussionLocked", payload={"locked": payload.is_locked})
 
     if payload.tags is not None:
         tags = await _tags_by_slug(session, payload.tags)
@@ -320,13 +319,15 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
         new = {t.id for t in tags}
         if old != new:
             discussion.tags = tags
-            _record(session, discussion.id, user.id, "discussionTagged",
-                    {"added": sorted(new - old), "removed": sorted(old - new)})
+            record(session, discussion_id=discussion.id, actor_id=user.id,
+                   kind="discussionTagged", payload=[sorted(old), sorted(new)])
 
     if payload.is_public is not None and payload.is_public != discussion.is_public:
         if payload.is_public and discussion.is_collapsed:
             raise HTTPException(status.HTTP_409_CONFLICT, "折叠的讨论不能设为公开")
         discussion.is_public = payload.is_public
+        record(session, discussion_id=discussion.id, actor_id=user.id,
+               kind="discussionVisibility", payload={"is_public": payload.is_public})
         await audit(session, actor_id=user.id, action="discussion.visibility",
                     target_type="discussion", target_id=discussion.id,
                     is_public=payload.is_public)
@@ -336,8 +337,8 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
         if payload.is_collapsed:
             # 折叠的讨论一定不公开
             discussion.is_public = False
-        _record(session, discussion.id, user.id, "discussionCollapsed",
-                {"collapsed": payload.is_collapsed})
+        record(session, discussion_id=discussion.id, actor_id=user.id,
+               kind="discussionCollapsed", payload={"collapsed": payload.is_collapsed})
         await audit(session, actor_id=user.id, action="discussion.collapse",
                     target_type="discussion", target_id=discussion.id,
                     collapsed=payload.is_collapsed)
@@ -348,6 +349,8 @@ async def edit_discussion(discussion_id: int, payload: EditDiscussion, session: 
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "最佳回复不属于该讨论")
         if discussion.best_answer_post_id != post.id:
             discussion.best_answer_post_id = post.id
+            record(session, discussion_id=discussion.id, actor_id=user.id,
+                   kind="discussionBestAnswer", payload={"post_number": post.number})
             await notify_best_answer(session, post=post, actor_id=user.id)
 
     await session.commit()
