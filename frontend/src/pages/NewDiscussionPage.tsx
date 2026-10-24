@@ -15,7 +15,7 @@ export function NewDiscussionPage() {
   const [body, setBody, clearBody] = useDraft('draft:new:body', '')
   const [picked, setPicked, clearPicked] = useDraft<string[]>('draft:new:tags', [])
 
-  // 站点配了默认板块时默认勾上；有草稿（用户自己选过）就不插手
+  // 发帖时默认勾上站点配置的板块；有草稿（用户自己选过）就不插手
   const defaultTag = meta.data?.default_tag ?? null
   const seeded = useRef(false)
   useEffect(() => {

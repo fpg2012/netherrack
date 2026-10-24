@@ -19,7 +19,7 @@ async def test_meta_reports_configured_default_tag(session, client, monkeypatch)
 
 
 async def test_meta_ignores_unknown_default_tag(session, client, monkeypatch) -> None:
-    # 配了一个不存在的标签：当没配处理，前端回落到「全部讨论」
+    # 配了一个不存在的标签：当没配处理，发帖时就不预选
     monkeypatch.setattr(settings, "default_tag", "meta_missing")
 
     body = (await client.get("/api/v1/meta")).json()
