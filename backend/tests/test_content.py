@@ -21,6 +21,13 @@ def test_markdown_sanitized() -> None:
     assert "<script" not in html
 
 
+def test_markdown_images_are_lazy() -> None:
+    html = render_markdown("![图](https://example.com/a.png)")
+    assert 'src="https://example.com/a.png"' in html
+    assert 'loading="lazy"' in html
+    assert 'decoding="async"' in html
+
+
 def test_plain_text_strips_tags_and_keeps_chinese() -> None:
     from app.services.content import plain_text
 

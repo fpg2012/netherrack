@@ -82,24 +82,40 @@ def embed_videos(markup: str) -> str:
     return _PARAGRAPH_LINK.sub(lambda m: _embed(m.group(1)) or m.group(0), markup)
 
 
+_IMG_TAG = re.compile(r"<img\b([^>]*)>", re.I)
+
+
+def lazy_images(markup: str) -> str:
+    """给正文图片补上浏览器原生懒加载属性（旧数据也覆盖）。"""
+    def repl(match: re.Match[str]) -> str:
+        attrs = match.group(1)
+        if "loading=" not in attrs:
+            attrs += ' loading="lazy"'
+        if "decoding=" not in attrs:
+            attrs += ' decoding="async"'
+        return f"<img{attrs}>"
+
+    return _IMG_TAG.sub(repl, markup)
+
+
 def render_markdown(text: str) -> str:
-    return _safe_iframes(nh3.clean(
+    return lazy_images(_safe_iframes(nh3.clean(
         embed_videos(_md.render(text)),
         tags=ALLOWED_TAGS,
         attributes=ALLOWED_ATTRS,
         link_rel="noopener noreferrer",
-    ))
+    )))
 
 
 def render_legacy_s9e(xml: str, uploads: dict | None = None) -> str:
     from app.services.s9e import to_html
 
-    return _safe_iframes(nh3.clean(
+    return lazy_images(_safe_iframes(nh3.clean(
         to_html(xml, uploads),
         tags=ALLOWED_TAGS,
         attributes=ALLOWED_ATTRS,
         link_rel="noopener noreferrer",
-    ))
+    )))
 
 
 EVENT_TEXT = {

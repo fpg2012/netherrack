@@ -63,7 +63,11 @@ export function setupFolding(root: HTMLElement | null): () => void {
   }
 
   for (const img of root.querySelectorAll('img')) {
-    if (img.classList.contains('emoji') || img.dataset.folded === '1') continue
+    if (img.classList.contains('emoji')) continue
+    // 兜底：数据库里已有的旧正文可能没有懒加载属性
+    if (!img.hasAttribute('loading')) img.loading = 'lazy'
+    if (!img.hasAttribute('decoding')) img.decoding = 'async'
+    if (img.dataset.folded === '1') continue
     const onLoad = () => foldImage(img)
     if (img.complete) {
       foldImage(img)

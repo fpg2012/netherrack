@@ -1132,6 +1132,20 @@ pre.is-folded {
   cursor: pointer;
   animation: toast-in .15s ease-out;
 }
+.toast-progress {
+  display: block;
+  height: 3px;
+  margin-top: .45em;
+  background: var(--line);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.toast-progress > span {
+  display: block;
+  height: 100%;
+  background: #b3261e;
+  transition: width .2s ease-out;
+}
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(.3em); }
   to { opacity: 1; transform: none; }
@@ -1143,6 +1157,9 @@ pre.is-folded {
     color: #e8e8e8;
     border-color: #4a4a4a;
     border-left-color: #e57373;
+  }
+  .toast-progress > span {
+    background: #e57373;
   }
 }
 

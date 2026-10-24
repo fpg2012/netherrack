@@ -3,9 +3,12 @@ import { useAllUsers, usePreview } from '../api/hooks'
 import type { UserBrief } from '../types'
 import { api } from '../api/client'
 import { Avatar } from './Avatar'
-import { toast } from './Toast'
+import { dismissToast, toast, updateToast } from './Toast'
 import { setupFolding } from '../lib/fold'
 import { renderMath } from '../lib/math'
+import {
+  compressImageForUpload, formatBytes, shouldCompressImage, UPLOAD_MAX_BYTES,
+} from '../lib/image'
 
 interface Props {
   value: string
@@ -140,15 +143,37 @@ export function MarkdownEditor({
 
   const upload = async (file: File) => {
     setUploading(true)
+    let progressId: number | null = null
     try {
+      let prepared = file
+      if (shouldCompressImage(file)) {
+        progressId = toast(`开始压缩 ${file.name}…`, { duration: 0, progress: 0 })
+        const result = await compressImageForUpload(file, (percent) => {
+          if (progressId !== null) {
+            updateToast(progressId, `正在压缩 ${file.name}… ${percent}%`, percent / 100)
+          }
+        })
+        prepared = result.file
+        dismissToast(progressId)
+        progressId = null
+        const before = formatBytes(result.originalSize)
+        const after = formatBytes(prepared.size)
+        toast(result.wasGif
+          ? `GIF 已转码为动图 WebP：${before} → ${after}`
+          : `图片已压缩为 WebP：${before} → ${after}`)
+      } else if (file.size > UPLOAD_MAX_BYTES) {
+        throw new Error(`文件超过 ${formatBytes(UPLOAD_MAX_BYTES)}，无法上传`)
+      }
+
       const form = new FormData()
-      form.append('file', file)
+      form.append('file', prepared)
       const res = await api.postForm<UploadResult>('/uploads', form)
       const snippet = res.mime.startsWith('image/')
         ? `![](${res.url})`
         : `[${res.filename}](${res.url})`
       insert(snippet)
     } catch (err) {
+      if (progressId !== null) dismissToast(progressId)
       toast(err instanceof Error ? err.message : '上传失败')
     } finally {
       setUploading(false)
