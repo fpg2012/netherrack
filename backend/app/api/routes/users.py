@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from pathlib import Path
 
@@ -12,11 +13,14 @@ from app.models import Discussion, Post, RefreshToken, User
 from app.schemas.common import Page
 from app.schemas.content import DiscussionBrief
 from app.schemas.user import (
+    AdminPasswordReset,
     PasswordChange,
+    PasswordResetOut,
     ProfileUpdate,
     UserListItem,
     UserPostItem,
     UserProfile,
+    UserStatusUpdate,
 )
 from app.services.audit import audit
 from app.services.content import plain_text
@@ -67,7 +71,8 @@ async def list_users(
     items = [
         UserListItem(
             id=u.id, username=u.username, nickname=u.nickname, avatar_path=u.avatar_path,
-            joined_at=u.joined_at, is_admin=u.is_admin, posts=posts, discussions=discussions,
+            joined_at=u.joined_at, is_admin=u.is_admin, is_active=u.is_active,
+            posts=posts, discussions=discussions,
         )
         for u, posts, discussions in rows
     ]
@@ -100,7 +105,8 @@ async def update_me(
     return UserProfile(
         id=viewer.id, username=viewer.username, nickname=viewer.nickname,
         avatar_path=viewer.avatar_path, joined_at=viewer.joined_at,
-        is_admin=viewer.is_admin, posts=posts, discussions=discussions, bio=viewer.bio,
+        is_admin=viewer.is_admin, is_active=viewer.is_active,
+        posts=posts, discussions=discussions, bio=viewer.bio,
     )
 
 
@@ -169,7 +175,8 @@ async def upload_avatar(
     return UserProfile(
         id=viewer.id, username=viewer.username, nickname=viewer.nickname,
         avatar_path=viewer.avatar_path, joined_at=viewer.joined_at,
-        is_admin=viewer.is_admin, posts=posts, discussions=discussions, bio=viewer.bio,
+        is_admin=viewer.is_admin, is_active=viewer.is_active,
+        posts=posts, discussions=discussions, bio=viewer.bio,
     )
 
 
@@ -188,6 +195,76 @@ async def change_password(
     viewer.password_hash = hash_password(payload.new_password)
     # 改密码后让其他设备上的会话失效
     await session.execute(delete(RefreshToken).where(RefreshToken.user_id == viewer.id))
+    await session.commit()
+
+
+_PASSWORD_ALPHABET = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def _generate_password(length: int = 16) -> str:
+    return "".join(secrets.choice(_PASSWORD_ALPHABET) for _ in range(length))
+
+
+@router.post("/{user_id}/reset-password", response_model=PasswordResetOut,
+             dependencies=[Depends(verify_csrf)])
+@limiter.limit("10/hour")
+async def reset_user_password(
+    request: Request,
+    user_id: int,
+    payload: AdminPasswordReset,
+    session: SessionDep,
+    viewer: CurrentUser,
+) -> PasswordResetOut:
+    """管理员重置指定用户的密码，并让该用户所有 refresh token 失效。"""
+    if not viewer.is_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "只有管理员可以重置密码")
+
+    target = await session.get(User, user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="用户不存在")
+
+    generated = payload.new_password is None
+    password = payload.new_password or _generate_password()
+    target.password_hash = hash_password(password)
+    await session.execute(delete(RefreshToken).where(RefreshToken.user_id == target.id))
+    await audit(session, actor_id=viewer.id, action="user.password_reset",
+                target_type="user", target_id=target.id, generated=generated)
+    await session.commit()
+    return PasswordResetOut(password=password)
+
+
+@router.patch("/{user_id}/status", status_code=204,
+              dependencies=[Depends(verify_csrf)])
+@limiter.limit("30/hour")
+async def update_user_status(
+    request: Request,
+    user_id: int,
+    payload: UserStatusUpdate,
+    session: SessionDep,
+    viewer: CurrentUser,
+) -> None:
+    """管理员封禁 / 解封账号。封禁会立即让该用户的 token 失效。"""
+    if not viewer.is_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "只有管理员可以封禁或解封账号")
+    if user_id == viewer.id:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "不能修改自己的账号状态")
+
+    target = await session.get(User, user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    if target.is_active == payload.is_active:
+        return
+
+    target.is_active = payload.is_active
+    if not payload.is_active:
+        await session.execute(delete(RefreshToken).where(RefreshToken.user_id == target.id))
+    await audit(
+        session,
+        actor_id=viewer.id,
+        action="user.unban" if payload.is_active else "user.ban",
+        target_type="user",
+        target_id=target.id,
+    )
     await session.commit()
 
 
@@ -216,7 +293,8 @@ async def get_user(user_id: int, session: SessionDep, viewer: CurrentUser) -> Us
     return UserProfile(
         id=target.id, username=target.username, nickname=target.nickname,
         avatar_path=target.avatar_path, joined_at=target.joined_at,
-        is_admin=target.is_admin, posts=posts, discussions=discussions, bio=target.bio,
+        is_admin=target.is_admin, is_active=target.is_active,
+        posts=posts, discussions=discussions, bio=target.bio,
     )
 
 

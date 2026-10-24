@@ -255,6 +255,28 @@ export function useUser(id: number) {
   })
 }
 
+export function useSetUserActive() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, is_active }: { id: number; is_active: boolean }) =>
+      api.patch<void>(`/users/${id}/status`, { is_active }),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: ['users'] })
+      qc.invalidateQueries({ queryKey: ['user', id] })
+    },
+  })
+}
+
+export function useResetUserPassword(id: number | undefined) {
+  return useMutation({
+    mutationFn: (new_password?: string) =>
+      api.post<{ password: string }>(
+        `/users/${id}/reset-password`,
+        new_password ? { new_password } : {},
+      ),
+  })
+}
+
 export function useUserDiscussions(id: number, page: number) {
   return useQuery({
     queryKey: ['user', id, 'discussions', page],

@@ -648,6 +648,43 @@ h2.small { font-size: 90%; font-weight: normal; color: #606060; }
   .post-head .actions button:hover { color: #fff; background: #333; }
 }
 
+/* 用户列表里的管理员重置密码 */
+.reset-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5em;
+  padding: .45em 0;
+}
+.reset-form input {
+  font: inherit;
+  font-size: 92%;
+  min-width: 17em;
+  padding: .2em .5em;
+  border: 1px solid #bbb;
+  border-radius: 2px;
+  background: #fff;
+  color: inherit;
+}
+.reset-row > td { background: #fafafa; }
+.admin-reset-result {
+  margin: .35em 0;
+  padding: .7em .9em;
+  border: 1px solid var(--line-strong);
+}
+.admin-reset-result .code-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .8em;
+}
+.admin-reset-result code {
+  font-family: Menlo, Consolas, monospace;
+  font-size: 1.1em;
+  letter-spacing: .06em;
+  overflow-wrap: anywhere;
+}
+
 /* 用户列表 */
 .inline-form { margin: .5em 0 1em; display: flex; gap: .4em; }
 .inline-form input { font: inherit; padding: .1em .4em; border: 1px solid #bbb; background: #fff; color: inherit; }
@@ -659,6 +696,8 @@ table.users .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 @media (prefers-color-scheme: dark) {
   .inline-form input { background: #242424; border-color: #4a4a4a; }
+  .reset-form input { background: #242424; border-color: #4a4a4a; }
+  .reset-row > td { background: #202020; }
   table.users td { border-bottom-color: #2c2c2c; }
 }
 

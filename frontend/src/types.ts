@@ -97,6 +97,7 @@ export interface UserListItem {
   avatar_path: string | null
   joined_at: string
   is_admin: boolean
+  is_active: boolean
   posts: number
   discussions: number
 }

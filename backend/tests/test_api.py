@@ -1,10 +1,10 @@
 from datetime import UTC, datetime
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 
-from app.core.security import create_token
-from app.models import AuditLog, Discussion, Notification, Post, User
+from app.core.security import create_token, hash_password, verify_password
+from app.models import AuditLog, Discussion, Notification, Post, RefreshToken, User
 
 CSRF = "test-csrf-token"
 
@@ -214,3 +214,100 @@ async def test_security_headers_present(client, path) -> None:
     response = await client.get(path)
     assert response.headers["x-frame-options"] == "DENY"
     assert response.headers["x-content-type-options"] == "nosniff"
+
+
+async def test_admin_resets_user_password(session, client) -> None:
+    target = await make_user(session, "api_reset11")
+    admin = await make_user(session, "api_admin11", admin=True)
+    session.add(RefreshToken(
+        user_id=target.id, token_hash="r" * 64,
+        expires_at=datetime.now(UTC),
+    ))
+    await session.commit()
+
+    # 普通用户不能重置别人
+    headers = auth(client, target)
+    response = await client.post(
+        f"/api/v1/users/{target.id}/reset-password", headers=headers, json={})
+    assert response.status_code == 403
+
+    # 管理员可以指定新密码，并清掉该用户的 refresh token
+    headers = auth(client, admin)
+    response = await client.post(
+        f"/api/v1/users/{target.id}/reset-password", headers=headers,
+        json={"new_password": "newpass123"},
+    )
+    assert response.status_code == 200
+    assert response.json()["password"] == "newpass123"
+    await session.refresh(target)
+    assert verify_password("newpass123", target.password_hash)[0] is True
+    tokens = await session.scalar(
+        select(func.count()).select_from(RefreshToken)
+        .where(RefreshToken.user_id == target.id))
+    assert tokens == 0
+    log = await session.scalar(
+        select(AuditLog).where(AuditLog.action == "user.password_reset"))
+    assert log is not None and log.payload["generated"] is False
+
+    # 不传密码时自动生成
+    response = await client.post(
+        f"/api/v1/users/{target.id}/reset-password", headers=headers, json={})
+    assert response.status_code == 200
+    password = response.json()["password"]
+    assert len(password) >= 8
+    await session.refresh(target)
+    assert verify_password(password, target.password_hash)[0] is True
+
+
+async def test_admin_ban_blocks_login(session, client) -> None:
+    target = User(username="api_ban12", email="api_ban12@example.com",
+                  password_hash=hash_password("password123"))
+    admin = await make_user(session, "api_admin12", admin=True)
+    session.add(target)
+    await session.commit()
+
+    # 正常可以登录
+    guest(client)
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"username": "api_ban12", "password": "password123"},
+    )
+    assert response.status_code == 200
+
+    # 普通用户不能封禁别人
+    headers = auth(client, target)
+    response = await client.patch(
+        f"/api/v1/users/{target.id}/status", headers=headers, json={"is_active": False})
+    assert response.status_code == 403
+
+    # 管理员封禁：refresh token 被清空，已有 access token 也立即失效
+    headers = auth(client, admin)
+    response = await client.patch(
+        f"/api/v1/users/{target.id}/status", headers=headers, json={"is_active": False})
+    assert response.status_code == 204
+    tokens = await session.scalar(
+        select(func.count()).select_from(RefreshToken)
+        .where(RefreshToken.user_id == target.id))
+    assert tokens == 0
+    auth(client, target)
+    assert (await client.get("/api/v1/auth/me")).status_code == 401
+
+    # 被封禁后不能登录
+    guest(client)
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"username": "api_ban12", "password": "password123"},
+    )
+    assert response.status_code == 401
+
+    # 解封后恢复登录
+    headers = auth(client, admin)
+    response = await client.patch(
+        f"/api/v1/users/{target.id}/status", headers=headers, json={"is_active": True})
+    assert response.status_code == 204
+    guest(client)
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"username": "api_ban12", "password": "password123"},
+    )
+    assert response.status_code == 200
