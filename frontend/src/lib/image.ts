@@ -1,3 +1,9 @@
+import imageCompression from 'browser-image-compression'
+// 让压缩库的 Web Worker 从本站加载，而不是默认的 jsDelivr CDN。
+// 这样离线/被墙时也能在 worker 里压缩，不会退回主线程。
+import compressionLibUrl from 'browser-image-compression/dist/browser-image-compression.js?url'
+// Canvas 只能拿到 GIF 第一帧，所以动图交给 gif2webp（libwebp 的 WASM 版）。
+// 它在自己的 worker 里跑，保留所有帧、透明度和循环设置。
 import { gif2webp } from '@btheegg-kimth/gif2webp/worker'
 
 /** 超过这个大小就转成 WebP，即使还没碰到上传上限。 */
@@ -5,10 +11,9 @@ export const COMPRESS_OVER_BYTES = 1024 * 1024
 /** 后端 /uploads 的单个附件上限。 */
 export const UPLOAD_MAX_BYTES = 5 * 1024 * 1024
 
-// 长边限制在 1024；配合最低质量，正常图片很难碰到 5 MB 上限。
-const MAX_EDGE = 1024
-// libwebp 的质量范围是 0–100；直接用最低质量，优先减小体积。
-const WEBP_QUALITY = 20
+const MAX_EDGE = 2560
+// 比较激进的质量，优先减小体积。
+const INITIAL_QUALITY = 0.55
 
 export interface CompressedImage {
   file: File
@@ -96,120 +101,9 @@ async function compressGif(
   }
 }
 
-function loadImage(file: File): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      resolve(img)
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('图片解码失败，可能是当前浏览器不支持该格式'))
-    }
-    img.src = url
-  })
-}
-
-function drawImageData(img: HTMLImageElement, width: number, height: number): ImageData {
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const context = canvas.getContext('2d')
-  if (!context) throw new Error('浏览器不支持 Canvas，无法压缩图片')
-  context.drawImage(img, 0, 0, width, height)
-  const data = context.getImageData(0, 0, width, height)
-  // 及时释放大画布占用的内存。
-  canvas.width = 0
-  canvas.height = 0
-  return data
-}
-
-interface EncodeMessage {
-  type: 'done' | 'error'
-  buffer?: ArrayBuffer
-  message?: string
-}
-
-/**
- * 在 Web Worker 里用 libwebp（WASM）编码 WebP。
- * Safari 的 Canvas 不能编码 WebP，WASM 不依赖浏览器的编码能力。
- */
-function encodeWebp(data: ImageData): Promise<ArrayBuffer> {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(
-      new URL('./webp-encoder.worker.ts', import.meta.url),
-      { type: 'module' },
-    )
-
-    const finish = () => worker.terminate()
-
-    worker.onmessage = (event: MessageEvent<EncodeMessage>) => {
-      const message = event.data
-      finish()
-      if (message.type === 'done' && message.buffer) {
-        resolve(message.buffer)
-      } else {
-        reject(new Error(message.message || 'WebP 编码失败'))
-      }
-    }
-
-    worker.onerror = (event) => {
-      finish()
-      reject(new Error(event.message || 'WebP 编码器加载失败'))
-    }
-
-    worker.postMessage(
-      {
-        buffer: data.data.buffer,
-        width: data.width,
-        height: data.height,
-        quality: WEBP_QUALITY,
-      },
-      [data.data.buffer],
-    )
-  })
-}
-
-async function compressStaticImage(
-  file: File,
-  onProgress?: (percent: number) => void,
-): Promise<CompressedImage> {
-  const img = await loadImage(file)
-  onProgress?.(8)
-
-  const naturalWidth = img.naturalWidth
-  const naturalHeight = img.naturalHeight
-  if (!naturalWidth || !naturalHeight) throw new Error('无法读取图片尺寸')
-
-  const scale = Math.min(1, MAX_EDGE / Math.max(naturalWidth, naturalHeight))
-  const width = Math.max(1, Math.round(naturalWidth * scale))
-  const height = Math.max(1, Math.round(naturalHeight * scale))
-
-  const data = drawImageData(img, width, height)
-  onProgress?.(20)
-  const buffer = await encodeWebp(data)
-  const prepared = preparedFile(buffer, file.name, file.lastModified)
-
-  if (prepared.size > UPLOAD_MAX_BYTES) {
-    throw new Error(
-      `压缩后仍有 ${formatBytes(prepared.size)}，超过 ${formatBytes(UPLOAD_MAX_BYTES)} 上限，已拒绝上传`,
-    )
-  }
-
-  onProgress?.(100)
-  return {
-    file: prepared,
-    compressed: true,
-    originalSize: file.size,
-    wasGif: false,
-  }
-}
-
 /**
  * 把超过 1 MB 的图片（以及所有 GIF）压缩/转码成 WebP。
- * 静态图用 libwebp 的 WASM 在 Worker 中编码，不依赖 Canvas 的 WebP 支持。
+ * 真正的解码与编码在 Web Worker 中进行，不阻塞页面渲染。
  */
 export async function compressImageForUpload(
   file: File,
@@ -232,5 +126,40 @@ export async function compressImageForUpload(
     }
   }
 
-  return compressStaticImage(file, onProgress)
+  let output: File
+  try {
+    output = await imageCompression(file, {
+      // 达到后端上限时库会自动继续降低质量/分辨率
+      maxSizeMB: UPLOAD_MAX_BYTES / 1024 / 1024,
+      maxWidthOrHeight: MAX_EDGE,
+      useWebWorker: true,
+      fileType: 'image/webp',
+      initialQuality: INITIAL_QUALITY,
+      maxIteration: 10,
+      libURL: compressionLibUrl,
+      onProgress: (percent) => onProgress?.(Math.round(percent)),
+    })
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err)
+    throw new Error(`图片压缩失败：${detail}`)
+  }
+
+  if (output.type !== 'image/webp') {
+    throw new Error('当前浏览器不支持 WebP 编码，无法压缩图片')
+  }
+
+  const prepared = preparedFile(output, file.name, file.lastModified)
+
+  if (prepared.size > UPLOAD_MAX_BYTES) {
+    throw new Error(
+      `压缩后仍有 ${formatBytes(prepared.size)}，超过 ${formatBytes(UPLOAD_MAX_BYTES)} 上限，已拒绝上传`,
+    )
+  }
+
+  return {
+    file: prepared,
+    compressed: true,
+    originalSize: file.size,
+    wasGif: file.type === 'image/gif',
+  }
 }
