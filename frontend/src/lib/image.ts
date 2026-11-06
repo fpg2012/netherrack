@@ -33,12 +33,40 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
-function webpName(name: string): string {
-  return `${name.replace(/\.[^./\\]+$/, '') || 'image'}.webp`
+const OUTPUT_EXTENSIONS: Record<string, string> = {
+  'image/webp': '.webp',
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
 }
 
-function preparedFile(data: BlobPart | Uint8Array, name: string, lastModified: number): File {
-  return new File([data as BlobPart], webpName(name), { type: 'image/webp', lastModified })
+let webpEncodingSupported: boolean | undefined
+
+/** Safari 的 Canvas 不能编码 WebP，请求 image/webp 时会静默返回 PNG。 */
+function canEncodeWebp(): boolean {
+  if (webpEncodingSupported !== undefined) return webpEncodingSupported
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = 1
+    canvas.height = 1
+    webpEncodingSupported = canvas.toDataURL('image/webp').startsWith('data:image/webp')
+  } catch {
+    webpEncodingSupported = false
+  }
+  return webpEncodingSupported
+}
+
+function imageName(name: string, type: string): string {
+  const ext = OUTPUT_EXTENSIONS[type] ?? '.jpg'
+  return `${name.replace(/\.[^./\\]+$/, '') || 'image'}${ext}`
+}
+
+function preparedFile(
+  data: BlobPart | Uint8Array,
+  name: string,
+  lastModified: number,
+  type: string,
+): File {
+  return new File([data as BlobPart], imageName(name, type), { type, lastModified })
 }
 
 // 动图（表情包）不追求画质，直接压分辨率和质量；
@@ -90,7 +118,7 @@ async function compressGif(
       lastSize = output.byteLength
       if (lastSize <= UPLOAD_MAX_BYTES) {
         report(100)
-        return preparedFile(output, file.name, file.lastModified)
+        return preparedFile(output, file.name, file.lastModified, 'image/webp')
       }
     }
     throw new Error(
@@ -103,6 +131,7 @@ async function compressGif(
 
 /**
  * 把超过 1 MB 的图片（以及所有 GIF）压缩/转码成 WebP。
+ * 浏览器不支持 WebP 编码时（Safari）回退为 JPEG。
  * 真正的解码与编码在 Web Worker 中进行，不阻塞页面渲染。
  */
 export async function compressImageForUpload(
@@ -126,6 +155,8 @@ export async function compressImageForUpload(
     }
   }
 
+  const outputType = canEncodeWebp() ? 'image/webp' : 'image/jpeg'
+
   let output: File
   try {
     output = await imageCompression(file, {
@@ -133,7 +164,7 @@ export async function compressImageForUpload(
       maxSizeMB: UPLOAD_MAX_BYTES / 1024 / 1024,
       maxWidthOrHeight: MAX_EDGE,
       useWebWorker: true,
-      fileType: 'image/webp',
+      fileType: outputType,
       initialQuality: INITIAL_QUALITY,
       maxIteration: 10,
       libURL: compressionLibUrl,
@@ -144,11 +175,12 @@ export async function compressImageForUpload(
     throw new Error(`图片压缩失败：${detail}`)
   }
 
-  if (output.type !== 'image/webp') {
-    throw new Error('当前浏览器不支持 WebP 编码，无法压缩图片')
+  // 极少数浏览器会无视请求的格式，按实际结果命名，避免扩展名和内容不一致。
+  if (!OUTPUT_EXTENSIONS[output.type]) {
+    throw new Error(`当前浏览器无法生成可上传的图片格式（${output.type || '未知'}）`)
   }
 
-  const prepared = preparedFile(output, file.name, file.lastModified)
+  const prepared = preparedFile(output, file.name, file.lastModified, output.type)
 
   if (prepared.size > UPLOAD_MAX_BYTES) {
     throw new Error(

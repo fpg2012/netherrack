@@ -158,9 +158,12 @@ export function MarkdownEditor({
         progressId = null
         const before = formatBytes(result.originalSize)
         const after = formatBytes(prepared.size)
+        const formatLabel = prepared.type === 'image/webp'
+          ? 'WebP'
+          : prepared.type === 'image/png' ? 'PNG' : 'JPEG'
         toast(result.wasGif
           ? `GIF 已转码为动图 WebP：${before} → ${after}`
-          : `图片已压缩为 WebP：${before} → ${after}`)
+          : `图片已压缩为 ${formatLabel}：${before} → ${after}`)
       } else if (file.size > UPLOAD_MAX_BYTES) {
         throw new Error(`文件超过 ${formatBytes(UPLOAD_MAX_BYTES)}，无法上传`)
       }
